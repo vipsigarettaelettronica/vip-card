@@ -45,13 +45,8 @@
         <div id="ageNotice" class="notice" aria-live="polite"></div>
 
         <label class="check-row">
-          <input id="adultConfirm" type="checkbox" required>
-          <span>Confermo di avere almeno 18 anni.</span>
-        </label>
-
-        <label class="check-row">
           <input id="privacyConsent" type="checkbox" required>
-          <span>Ho letto e accetto l’informativa privacy. <strong class="demo-tag">DEMO</strong></span>
+          <span>Ho letto e accetto l’informativa privacy.</span>
         </label>
 
         <label class="check-row">
@@ -88,11 +83,7 @@
         <button id="copyCode" class="secondary" type="button">COPIA CODICE TESSERA</button>
       </div>
 
-      <details class="demo-tools">
-        <summary>Strumenti demo</summary>
-        <p>Questa versione salva la tessera solo su questo dispositivo. Il database online verrà aggiunto nella versione successiva.</p>
-        <button id="resetDemo" class="danger" type="button">Cancella tessera demo</button>
-      </details>
+      <p id="syncStatus" class="notice ok">Tessera collegata al database V.I.P.</p>
     </section>
   </main>
 
@@ -106,6 +97,6 @@
     </div>
   </div>
 
-  <script src="app.js"></script>
+  <script type="module" src="app.js"></script>
 </body>
 </html>

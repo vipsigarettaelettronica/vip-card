@@ -1,4 +1,19 @@
-const STORE_KEY = 'vipCardDemoV1';
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+import { getAuth, onAuthStateChanged, signInAnonymously } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
+import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+
+const firebaseConfig = {
+  apiKey: 'AIzaSyD-q497X-cHUevz0BL_TKc3L8sHmNQ0LDs',
+  authDomain: 'vip-card-22fbe.firebaseapp.com',
+  projectId: 'vip-card-22fbe',
+  storageBucket: 'vip-card-22fbe.firebasestorage.app',
+  messagingSenderId: '654929991228',
+  appId: '1:654929991228:web:f7b91cc0f57c34342e5539'
+};
+
+const firebaseApp = initializeApp(firebaseConfig);
+const auth = getAuth(firebaseApp);
+const db = getFirestore(firebaseApp);
 
 // Code 128 patterns. Uppercase = bar, lowercase = space. A-D = width 1-4.
 const C128 = [
@@ -9,6 +24,8 @@ const $ = id => document.getElementById(id);
 const registrationView = $('registrationView');
 const cardView = $('cardView');
 const form = $('registrationForm');
+let currentUser = null;
+let currentCard = null;
 
 function sanitizeName(v) {
   return v.trim().replace(/\s+/g, ' ');
@@ -33,8 +50,7 @@ function randomCode() {
 }
 
 function code128Values(text) {
-  // Code Set B supports ASCII 32-126. Our generated codes use only that range.
-  const values = [104]; // START B
+  const values = [104];
   for (const ch of text) {
     const n = ch.charCodeAt(0);
     if (n < 32 || n > 126) throw new Error('Carattere non supportato nel barcode');
@@ -61,8 +77,7 @@ function drawBarcode(svg, text, large=false) {
     for (const ch of C128[v]) {
       const idx = 'ABCDabcd'.indexOf(ch);
       const width = idx % 4 + 1;
-      const isBar = ch === ch.toUpperCase();
-      if (isBar) {
+      if (ch === ch.toUpperCase()) {
         const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
         rect.setAttribute('x', x);
         rect.setAttribute('y', 0);
@@ -83,6 +98,7 @@ function isBirthdayToday(isoDate) {
 }
 
 function showCard(data) {
+  currentCard = data;
   registrationView.classList.add('hidden');
   cardView.classList.remove('hidden');
   $('welcomeName').textContent = `Ciao, ${data.firstName}`;
@@ -116,9 +132,39 @@ function validateBirthDate() {
   return true;
 }
 
+async function loadOwnCard(user) {
+  const ref = doc(db, 'cards', user.uid);
+  const snap = await getDoc(ref);
+  if (snap.exists()) showCard(snap.data());
+}
+
+async function ensureAnonymousSession() {
+  return new Promise((resolve, reject) => {
+    const unsub = onAuthStateChanged(auth, async user => {
+      if (user) {
+        currentUser = user;
+        unsub();
+        try {
+          await loadOwnCard(user);
+          resolve(user);
+        } catch (err) {
+          reject(err);
+        }
+      } else {
+        try {
+          await signInAnonymously(auth);
+        } catch (err) {
+          unsub();
+          reject(err);
+        }
+      }
+    });
+  });
+}
+
 $('birthDate').addEventListener('change', validateBirthDate);
 
-form.addEventListener('submit', e => {
+form.addEventListener('submit', async e => {
   e.preventDefault();
   $('formError').textContent = '';
   if (!form.reportValidity()) return;
@@ -126,22 +172,47 @@ form.addEventListener('submit', e => {
     $('formError').textContent = 'Non è possibile creare la tessera.';
     return;
   }
-  if (!$('adultConfirm').checked || !$('privacyConsent').checked) {
-    $('formError').textContent = 'Devi confermare la maggiore età e accettare l’informativa privacy.';
+  if (!$('privacyConsent').checked) {
+    $('formError').textContent = 'Devi accettare l’informativa privacy.';
     return;
   }
-  const data = {
-    firstName: sanitizeName($('firstName').value),
-    lastName: sanitizeName($('lastName').value),
-    phone: $('phone').value.trim(),
-    email: $('email').value.trim(),
-    birthDate: $('birthDate').value,
-    marketingConsent: $('marketingConsent').checked,
-    cardCode: randomCode(),
-    createdAt: new Date().toISOString()
-  };
-  localStorage.setItem(STORE_KEY, JSON.stringify(data));
-  showCard(data);
+
+  const submitBtn = form.querySelector('button[type="submit"]');
+  submitBtn.disabled = true;
+  submitBtn.textContent = 'CREAZIONE IN CORSO...';
+
+  try {
+    if (!currentUser) await ensureAnonymousSession();
+    const cardRef = doc(db, 'cards', currentUser.uid);
+    const existing = await getDoc(cardRef);
+    if (existing.exists()) {
+      showCard(existing.data());
+      return;
+    }
+
+    const data = {
+      ownerUid: currentUser.uid,
+      firstName: sanitizeName($('firstName').value),
+      lastName: sanitizeName($('lastName').value),
+      phone: $('phone').value.trim(),
+      email: $('email').value.trim(),
+      birthDate: $('birthDate').value,
+      privacyConsent: true,
+      marketingConsent: $('marketingConsent').checked,
+      consentVersion: '2026-09-v1',
+      cardCode: randomCode(),
+      createdAt: serverTimestamp()
+    };
+
+    await setDoc(cardRef, data);
+    showCard({ ...data, createdAt: new Date().toISOString() });
+  } catch (err) {
+    console.error(err);
+    $('formError').textContent = 'Non riesco a salvare la tessera. Controlla la connessione e riprova.';
+  } finally {
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'CREA LA MIA V.I.P. CARD';
+  }
 });
 
 $('fullscreenBarcode').addEventListener('click', () => $('barcodeModal').classList.remove('hidden'));
@@ -159,18 +230,10 @@ $('copyCode').addEventListener('click', async () => {
   }
 });
 
-$('resetDemo').addEventListener('click', () => {
-  if (confirm('Vuoi cancellare la tessera salvata su questo dispositivo?')) {
-    localStorage.removeItem(STORE_KEY);
-    location.reload();
-  }
+ensureAnonymousSession().catch(err => {
+  console.error(err);
+  $('formError').textContent = 'Connessione al servizio tessere non disponibile. Ricarica la pagina.';
 });
-
-const saved = localStorage.getItem(STORE_KEY);
-if (saved) {
-  try { showCard(JSON.parse(saved)); }
-  catch { localStorage.removeItem(STORE_KEY); }
-}
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(() => {}));
