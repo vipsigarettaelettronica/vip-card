@@ -120,3 +120,6 @@ a { color:var(--gold2); }
 .legal-copy h2 { margin:24px 0 6px; font-size:1.18rem; }
 .legal-copy p { color:#ddd; }
 .link-button { display:inline-block; text-decoration:none; margin-top:12px; }
+
+.birthday-box.used { border-color:#555; background:#242424; }
+.birthday-box.used strong { color:#bbb; }

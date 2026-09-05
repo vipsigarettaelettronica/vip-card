@@ -1,4 +1,4 @@
-const CACHE = 'vip-card-v4';
+const CACHE = 'vip-card-v5';
 const ASSETS = [
   './', './index.html', './styles.css', './app.js', './manifest.webmanifest', './privacy.html',
   './assets/logo-vip.png', './assets/icon-192.png', './assets/icon-512.png',

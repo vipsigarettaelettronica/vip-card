@@ -89,11 +89,24 @@ function drawBarcode(svg, text, large=false) {
     }
   }
 }
-function isBirthdayToday(data) {
+function birthdayCouponStatus(data) {
   const md = data.birthMonthDay || birthMonthDay(data.birthDate);
-  if (!md) return false;
-  const now = new Date();
-  return md === `${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+  if (!md) return { active: false, used: false };
+  const [m, d] = md.split('-').map(Number);
+  if (!m || !d) return { active: false, used: false };
+  const today = new Date(); today.setHours(0,0,0,0);
+  const candidates = [today.getFullYear(), today.getFullYear() - 1];
+  for (const year of candidates) {
+    const start = new Date(year, m - 1, d); start.setHours(0,0,0,0);
+    const end = new Date(start); end.setDate(end.getDate() + 6);
+    if (today >= start && today <= end) {
+      return { active: true, used: Number(data.birthdayCouponUsedYear) === year, year, end };
+    }
+  }
+  return { active: false, used: false };
+}
+function formatShortDate(date) {
+  return date.toLocaleDateString('it-IT', { day: 'numeric', month: 'long' });
 }
 
 function showRegistration() {
@@ -121,7 +134,16 @@ function showCard(data, recoveryCode='', recovered=false) {
   $('recoveryCode').textContent = currentRecoveryCode || '—';
   drawBarcode($('barcode'), data.cardCode, false);
   drawBarcode($('barcodeLarge'), data.cardCode, true);
-  $('birthdayBox').classList.toggle('hidden', !isBirthdayToday(data));
+  const coupon = birthdayCouponStatus(data);
+  const box = $('birthdayBox');
+  box.classList.toggle('hidden', !coupon.active);
+  if (coupon.active) {
+    $('birthdayTitle').textContent = coupon.used ? 'V.I.P. BIRTHDAY GIÀ UTILIZZATO' : 'BUON COMPLEANNO! -15%';
+    $('birthdayText').textContent = coupon.used
+      ? 'Il coupon compleanno di quest’anno risulta già utilizzato.'
+      : `Il tuo V.I.P. Birthday è attivo fino al ${formatShortDate(coupon.end)}. Utilizzabile una volta in negozio. Esclusi i prodotti soggetti a monopolio e gli articoli non promozionabili.`;
+    box.classList.toggle('used', coupon.used);
+  }
   $('syncStatus').textContent = recovered ? 'Tessera recuperata su questo dispositivo.' : 'Tessera collegata al database V.I.P.';
 }
 
@@ -143,6 +165,7 @@ async function createRecoveryRecord(user, data, code) {
     firstName: data.firstName,
     lastName: data.lastName,
     birthMonthDay: birthMonthDay(data.birthDate),
+    birthdayCouponUsedYear: data.birthdayCouponUsedYear || null,
     createdAt: serverTimestamp()
   });
 }

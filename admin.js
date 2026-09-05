@@ -47,6 +47,23 @@ function randomRecoveryCode() {
   return `RCV-${s.slice(0,4)}-${s.slice(4,8)}-${s.slice(8,12)}-${s.slice(12,16)}`;
 }
 function birthMonthDay(iso) { return iso?.length >= 10 ? iso.slice(5,10) : ''; }
+function birthdayCouponStatus(c) {
+  const md = birthMonthDay(c.birthDate);
+  if (!md) return { active:false, used:false };
+  const [m,d] = md.split('-').map(Number);
+  const today = new Date(); today.setHours(0,0,0,0);
+  for (const year of [today.getFullYear(), today.getFullYear()-1]) {
+    const start = new Date(year,m-1,d); start.setHours(0,0,0,0);
+    const end = new Date(start); end.setDate(end.getDate()+6);
+    if (today >= start && today <= end) return { active:true, used:Number(c.birthdayCouponUsedYear)===year, year, end };
+  }
+  return { active:false, used:false };
+}
+function couponLabel(c) {
+  const x=birthdayCouponStatus(c);
+  if (!x.active) return '';
+  return x.used ? '<span class="badge ok">BIRTHDAY USATO</span>' : '<span class="badge birthday">-15% BIRTHDAY ATTIVO</span>';
+}
 
 async function login() {
   $('loginError').textContent = '';
@@ -99,7 +116,7 @@ function render() {
   list.innerHTML = cards.map(c => `
     <article class="customer-card" data-id="${escapeHtml(c.id)}">
       <div class="customer-main">
-        <div class="customer-title-row"><h3>${escapeHtml(fullName(c) || 'Cliente')}</h3>${birthdayLabel(c)}</div>
+        <div class="customer-title-row"><h3>${escapeHtml(fullName(c) || 'Cliente')}</h3>${birthdayLabel(c)}${couponLabel(c)}</div>
         <div class="customer-code">${escapeHtml(c.cardCode || '—')}</div>
         <div class="customer-meta"><span>${escapeHtml(c.phone || 'Telefono non indicato')}</span><span>${escapeHtml(c.email || 'E-mail non indicata')}</span></div>
       </div>
@@ -124,6 +141,9 @@ function openDetail(id) {
   $('detailCreated').textContent = formatTimestamp(c.createdAt);
   $('detailDanea').textContent = c.daneaLinked === true ? 'Associata' : 'Da associare';
   $('detailRecovery').textContent = c.recoveryKey ? 'Attivo' : 'Non ancora generato';
+  const coupon = birthdayCouponStatus(c);
+  $('detailBirthdayCoupon').textContent = coupon.active ? (coupon.used ? 'Già utilizzato' : '-15% ATTIVO') : 'Non attivo oggi';
+  $('redeemBirthday').classList.toggle('hidden', !coupon.active || coupon.used);
   $('toggleDanea').textContent = c.daneaLinked === true ? 'SEGNA COME NON ASSOCIATA' : 'SEGNA ASSOCIATA A DANEA';
   $('customerModal').classList.remove('hidden');
 }
@@ -163,6 +183,28 @@ async function resetRecovery() {
   finally { btn.disabled = false; }
 }
 
+async function redeemBirthdayCoupon() {
+  if (!selectedCard) return;
+  const coupon = birthdayCouponStatus(selectedCard);
+  if (!coupon.active || coupon.used) return;
+  if (!confirm(`Confermi l'utilizzo del coupon V.I.P. Birthday -15% per ${fullName(selectedCard)}?`)) return;
+  const btn = $('redeemBirthday'); btn.disabled = true;
+  try {
+    await updateDoc(doc(db, 'cards', selectedCard.id), { birthdayCouponUsedYear: coupon.year, birthdayCouponUsedAt: serverTimestamp() });
+    if (selectedCard.recoveryKey) {
+      try { await updateDoc(doc(db, 'recoveries', selectedCard.recoveryKey), { birthdayCouponUsedYear: coupon.year }); } catch (e) { console.warn(e); }
+    }
+    selectedCard.birthdayCouponUsedYear = coupon.year;
+    const idx = allCards.findIndex(x => x.id === selectedCard.id); if (idx >= 0) allCards[idx].birthdayCouponUsedYear = coupon.year;
+    $('detailBirthdayCoupon').textContent = 'Già utilizzato';
+    btn.classList.add('hidden');
+    render();
+    alert('Coupon compleanno registrato come utilizzato.');
+  } catch (err) { console.error(err); alert('Non riesco a registrare il coupon.'); }
+  finally { btn.disabled = false; }
+}
+
+$('redeemBirthday').addEventListener('click', redeemBirthdayCoupon);
 $('googleLogin').addEventListener('click', login);
 $('logoutBtn').addEventListener('click', () => signOut(auth));
 $('searchInput').addEventListener('input', render);
