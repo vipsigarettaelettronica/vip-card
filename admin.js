@@ -171,6 +171,7 @@ async function resetRecovery() {
       firstName: selectedCard.firstName,
       lastName: selectedCard.lastName,
       birthMonthDay: birthMonthDay(selectedCard.birthDate),
+      birthdayCouponUsedYear: selectedCard.birthdayCouponUsedYear || null,
       createdAt: serverTimestamp()
     });
     await updateDoc(doc(db, 'cards', selectedCard.id), { recoveryKey: code, recoveryUpdatedAt: serverTimestamp() });

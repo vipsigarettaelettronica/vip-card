@@ -14,7 +14,7 @@ const firebaseConfig = {
 const firebaseApp = initializeApp(firebaseConfig);
 const auth = getAuth(firebaseApp);
 const db = getFirestore(firebaseApp);
-const RECOVERED_KEY = 'vipRecoveredCardV1';
+const RECOVERED_KEY = 'vipRecoveredCardV2';
 
 const C128 = [
 'BaBbBb','BbBaBb','BbBbBa','AbAbBc','AbAcBb','AcAbBb','AbBbAc','AbBcAb','AcBbAb','BbAbAc','BbAcAb','BcAbAb','AaBbCb','AbBaCb','AbBbCa','AaCbBb','AbCaBb','AbCbBa','BbCbAa','BbAaCb','BbAbCa','BaCbAb','BbCaAb','CaBaCa','CaAbBb','CbAaBb','CbAbBa','CaBbAb','CbBaAb','CbBbAa','BaBaBc','BaBcBa','BcBaBa','AaAcBc','AcAaBc','AcAcBa','AaBcAc','AcBaAc','AcBcAa','BaAcAc','BcAaAc','BcAcAa','AaBaCc','AaBcCa','AcBaCa','AaCaBc','AaCcBa','AcCaBa','CaCaBa','BaAcCa','BcAaCa','BaCaAc','BaCcAa','BaCaCa','CaAaBc','CaAcBa','CcAaBa','CaBaAc','CaBcAa','CcBaAa','CaDaAa','BbAdAa','DcAaAa','AaAbBd','AaAdBb','AbAaBd','AbAdBa','AdAaBb','AdAbBa','AaBbAd','AaBdAb','AbBaAd','AbBdAa','AdBaAb','AdBbAa','BdAbAa','BbAaAd','DaCaAa','BdAaAb','AcDaAa','AaAbDb','AbAaDb','AbAbDa','AaDbAb','AbDaAb','AbDbAa','DaAbAb','DbAaAb','DbAbAa','BaBaDa','BaDaBa','DaBaBa','AaAaDc','AaAcDa','AcAaDa','AaDaAc','AaDcAa','DaAaAc','DaAcAa','AaCaDa','AaDaCa','CaAaDa','DaAaCa','BaAdAb','BaAbAd','BaAbCb','BcCaAaB'
@@ -198,7 +198,22 @@ async function ensureAnonymousSession() {
             if (cached) {
               try {
                 const parsed = JSON.parse(cached);
-                if (parsed?.card?.cardCode && parsed?.recoveryCode) showCard(parsed.card, parsed.recoveryCode, true);
+                if (parsed?.card?.cardCode && parsed?.recoveryCode) {
+                  // Aggiorna i dati minimi della tessera dal record recovery, così
+                  // compleanno e stato coupon non restano bloccati nella cache locale.
+                  try {
+                    const freshSnap = await getDoc(doc(db, 'recoveries', parsed.recoveryCode));
+                    if (freshSnap.exists()) {
+                      const freshCard = freshSnap.data();
+                      localStorage.setItem(RECOVERED_KEY, JSON.stringify({ recoveryCode: parsed.recoveryCode, card: freshCard }));
+                      showCard(freshCard, parsed.recoveryCode, true);
+                    } else {
+                      showCard(parsed.card, parsed.recoveryCode, true);
+                    }
+                  } catch {
+                    showCard(parsed.card, parsed.recoveryCode, true);
+                  }
+                }
               } catch {}
             }
           }
@@ -269,6 +284,7 @@ $('recoveryForm').addEventListener('submit', async e => {
     const snap = await getDoc(doc(db, 'recoveries', code));
     if (!snap.exists()) { $('recoveryError').textContent = 'Codice non trovato. Controllalo oppure chiedi assistenza in negozio.'; return; }
     const card = snap.data();
+    localStorage.removeItem('vipRecoveredCardV1');
     localStorage.setItem(RECOVERED_KEY, JSON.stringify({ recoveryCode: code, card }));
     showCard(card, code, true);
   } catch (err) {

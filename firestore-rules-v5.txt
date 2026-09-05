@@ -1,0 +1,46 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return signedIn()
+        && request.auth.token.email == 'vipsigarettaelettronica@gmail.com';
+    }
+
+    match /cards/{cardId} {
+      allow get: if isAdmin() || (signedIn() && request.auth.uid == cardId);
+      allow list: if isAdmin();
+
+      allow create: if signedIn()
+        && request.auth.uid == cardId
+        && request.resource.data.ownerUid == request.auth.uid
+        && request.resource.data.privacyConsent == true;
+
+      allow update: if isAdmin()
+        || (signedIn()
+          && request.auth.uid == cardId
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['recoveryKey', 'recoveryUpdatedAt'])
+          && request.resource.data.ownerUid == resource.data.ownerUid
+          && request.resource.data.cardCode == resource.data.cardCode);
+
+      allow delete: if isAdmin();
+    }
+
+    match /recoveries/{recoveryCode} {
+      // Il codice di recupero è una chiave casuale ad alta entropia: chi lo conosce può recuperare
+      // soltanto i dati minimi necessari a ricostruire la tessera, non telefono/e-mail/data completa.
+      allow get: if true;
+      allow list: if false;
+
+      allow create: if isAdmin()
+        || (signedIn() && request.resource.data.ownerUid == request.auth.uid);
+
+      allow update, delete: if isAdmin();
+    }
+  }
+}
