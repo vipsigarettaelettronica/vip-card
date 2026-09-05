@@ -193,18 +193,34 @@ $('copyDetailCode').addEventListener('click', async () => {
 });
 
 onAuthStateChanged(auth, async user => {
-  if (!user) {
+
+  // Nessun utente oppure utente anonimo della tessera cliente:
+  // mostra semplicemente il login amministratore.
+  if (!user || user.isAnonymous) {
+    if (user?.isAnonymous) {
+      await signOut(auth);
+    }
+
     $('loginPanel').classList.remove('hidden');
     $('adminPanel').classList.add('hidden');
+    $('loginError').textContent = '';
     return;
   }
+
+  // Utente Google presente ma non autorizzato come amministratore.
   if (!isAdmin(user)) {
     await signOut(auth);
+    $('loginPanel').classList.remove('hidden');
+    $('adminPanel').classList.add('hidden');
     $('loginError').textContent = 'Questo account Google non è autorizzato.';
     return;
   }
+
+  // Amministratore autorizzato.
   $('loginPanel').classList.add('hidden');
   $('adminPanel').classList.remove('hidden');
   $('adminIdentity').textContent = user.email;
+  $('loginError').textContent = '';
+
   await loadCards();
 });
