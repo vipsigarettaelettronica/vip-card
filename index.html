@@ -46,7 +46,7 @@
 
         <label class="check-row">
           <input id="privacyConsent" type="checkbox" required>
-          <span>Ho letto e accetto l’informativa privacy.</span>
+          <span>Ho letto e accetto l’<a href="privacy.html" target="_blank" rel="noopener">informativa privacy</a>.</span>
         </label>
 
         <label class="check-row">
@@ -55,7 +55,22 @@
         </label>
 
         <button class="primary" type="submit">CREA LA MIA V.I.P. CARD</button>
+        <button id="showRecovery" class="secondary" type="button">HO GIÀ UNA TESSERA — RECUPERA</button>
         <p id="formError" class="error" aria-live="assertive"></p>
+      </form>
+    </section>
+
+    <section id="recoveryView" class="panel hidden">
+      <p class="eyebrow">RECUPERO TESSERA</p>
+      <h1>Recupera la V.I.P. Card</h1>
+      <p class="intro">Inserisci il codice di recupero ricevuto con la tessera. Serve se cambi telefono o cancelli i dati del browser.</p>
+      <form id="recoveryForm">
+        <label>Codice di recupero
+          <input id="recoveryInput" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="40" placeholder="es. RCV-XXXX-XXXX-XXXX-XXXX">
+        </label>
+        <button class="primary" type="submit">RECUPERA LA TESSERA</button>
+        <button id="backToRegistration" class="secondary" type="button">TORNA ALLA REGISTRAZIONE</button>
+        <p id="recoveryError" class="error" aria-live="assertive"></p>
       </form>
     </section>
 
@@ -75,7 +90,16 @@
 
       <div id="birthdayBox" class="birthday-box hidden">
         <strong>BUON COMPLEANNO!</strong>
-        <span>Il sistema ha riconosciuto il tuo compleanno. La funzione coupon è pronta per essere configurata.</span>
+        <span>Mostra questa schermata in negozio: il tuo coupon compleanno ti aspetta.</span>
+      </div>
+
+      <div class="recovery-box">
+        <div>
+          <strong>Codice recupero tessera</strong>
+          <p>Conservalo: ti permette di recuperare la card su un altro telefono.</p>
+        </div>
+        <code id="recoveryCode">—</code>
+        <button id="copyRecovery" class="secondary" type="button">COPIA CODICE RECUPERO</button>
       </div>
 
       <div class="actions">
@@ -83,6 +107,7 @@
         <button id="copyCode" class="secondary" type="button">COPIA CODICE TESSERA</button>
       </div>
 
+      <p class="points-note">I punti fedeltà restano gestiti in Danea e vengono aggiornati alla cassa.</p>
       <p id="syncStatus" class="notice ok">Tessera collegata al database V.I.P.</p>
     </section>
   </main>

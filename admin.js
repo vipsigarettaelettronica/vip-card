@@ -1,6 +1,6 @@
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
 import { getAuth, GoogleAuthProvider, onAuthStateChanged, signInWithPopup, signOut } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
-import { collection, doc, getDocs, getFirestore, serverTimestamp, updateDoc } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+import { collection, deleteDoc, doc, getDocs, getFirestore, serverTimestamp, setDoc, updateDoc } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 
 const firebaseConfig = {
   apiKey: 'AIzaSyD-q497X-cHUezvOBL_TKc3L8sHmNQOLDs',
@@ -23,43 +23,37 @@ let allCards = [];
 let selectedCard = null;
 
 function clean(v) { return String(v ?? '').trim(); }
-function escapeHtml(v) {
-  return clean(v).replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
-}
-function formatDate(iso) {
-  if (!iso) return '—';
-  const [y,m,d] = iso.split('-');
-  return y && m && d ? `${d}/${m}/${y}` : iso;
-}
-function formatTimestamp(ts) {
-  try { return ts?.toDate ? ts.toDate().toLocaleString('it-IT') : '—'; } catch { return '—'; }
-}
+function escapeHtml(v) { return clean(v).replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c])); }
+function formatDate(iso) { if (!iso) return '—'; const [y,m,d] = iso.split('-'); return y && m && d ? `${d}/${m}/${y}` : iso; }
+function formatTimestamp(ts) { try { return ts?.toDate ? ts.toDate().toLocaleString('it-IT') : '—'; } catch { return '—'; } }
 function nextBirthdayDays(iso) {
   if (!iso) return 9999;
   const [y,m,d] = iso.split('-').map(Number);
   if (!m || !d) return 9999;
-  const now = new Date();
-  now.setHours(0,0,0,0);
-  let next = new Date(now.getFullYear(), m-1, d);
-  next.setHours(0,0,0,0);
+  const now = new Date(); now.setHours(0,0,0,0);
+  let next = new Date(now.getFullYear(), m-1, d); next.setHours(0,0,0,0);
   if (next < now) next = new Date(now.getFullYear()+1, m-1, d);
   return Math.round((next-now)/86400000);
 }
 function fullName(c) { return `${clean(c.firstName)} ${clean(c.lastName)}`.trim(); }
 function isAdmin(user) { return !!user && clean(user.email).toLowerCase() === ADMIN_EMAIL; }
+function randomChars(n) {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  const bytes = new Uint8Array(n); crypto.getRandomValues(bytes);
+  return Array.from(bytes, b => chars[b % chars.length]).join('');
+}
+function randomRecoveryCode() {
+  const s = randomChars(16);
+  return `RCV-${s.slice(0,4)}-${s.slice(4,8)}-${s.slice(8,12)}-${s.slice(12,16)}`;
+}
+function birthMonthDay(iso) { return iso?.length >= 10 ? iso.slice(5,10) : ''; }
 
 async function login() {
   $('loginError').textContent = '';
   try {
     const result = await signInWithPopup(auth, provider);
-    if (!isAdmin(result.user)) {
-      await signOut(auth);
-      $('loginError').textContent = 'Questo account Google non è autorizzato.';
-    }
-  } catch (err) {
-    console.error(err);
-    $('loginError').textContent = 'Accesso non riuscito. Riprova.';
-  }
+    if (!isAdmin(result.user)) { await signOut(auth); $('loginError').textContent = 'Questo account Google non è autorizzato.'; }
+  } catch (err) { console.error(err); $('loginError').textContent = 'Accesso non riuscito. Riprova.'; }
 }
 
 async function loadCards() {
@@ -67,16 +61,9 @@ async function loadCards() {
   try {
     const snap = await getDocs(collection(db, 'cards'));
     allCards = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-    allCards.sort((a,b) => {
-      const at = a.createdAt?.seconds ?? 0;
-      const bt = b.createdAt?.seconds ?? 0;
-      return bt-at;
-    });
+    allCards.sort((a,b) => (b.createdAt?.seconds ?? 0) - (a.createdAt?.seconds ?? 0));
     render();
-  } catch (err) {
-    console.error(err);
-    $('adminError').textContent = 'Non riesco a leggere le tessere. Controlla le regole Firestore.';
-  }
+  } catch (err) { console.error(err); $('adminError').textContent = 'Non riesco a leggere le tessere. Controlla le regole Firestore.'; }
 }
 
 function updateStats() {
@@ -85,7 +72,6 @@ function updateStats() {
   $('statBirthdays').textContent = allCards.filter(c => nextBirthdayDays(c.birthDate) <= 30).length;
   $('statDanea').textContent = allCards.filter(c => c.daneaLinked !== true).length;
 }
-
 function filteredCards() {
   const q = clean($('searchInput').value).toLowerCase();
   const birthdays = $('birthdayFilter').checked;
@@ -98,48 +84,35 @@ function filteredCards() {
     return true;
   });
 }
-
 function birthdayLabel(c) {
   const days = nextBirthdayDays(c.birthDate);
   if (days === 0) return '<span class="badge birthday">COMPLEANNO OGGI</span>';
   if (days <= 30) return `<span class="badge birthday">COMPLEANNO TRA ${days} GG</span>`;
   return '';
 }
-
 function render() {
   updateStats();
   const cards = filteredCards();
   $('resultCount').textContent = `${cards.length} ${cards.length === 1 ? 'tessera trovata' : 'tessere trovate'}`;
   const list = $('customerList');
-  if (!cards.length) {
-    list.innerHTML = '<div class="panel empty-state">Nessun cliente corrisponde ai filtri.</div>';
-    return;
-  }
+  if (!cards.length) { list.innerHTML = '<div class="panel empty-state">Nessun cliente corrisponde ai filtri.</div>'; return; }
   list.innerHTML = cards.map(c => `
     <article class="customer-card" data-id="${escapeHtml(c.id)}">
       <div class="customer-main">
-        <div class="customer-title-row">
-          <h3>${escapeHtml(fullName(c) || 'Cliente')}</h3>
-          ${birthdayLabel(c)}
-        </div>
+        <div class="customer-title-row"><h3>${escapeHtml(fullName(c) || 'Cliente')}</h3>${birthdayLabel(c)}</div>
         <div class="customer-code">${escapeHtml(c.cardCode || '—')}</div>
-        <div class="customer-meta">
-          <span>${escapeHtml(c.phone || 'Telefono non indicato')}</span>
-          <span>${escapeHtml(c.email || 'E-mail non indicata')}</span>
-        </div>
+        <div class="customer-meta"><span>${escapeHtml(c.phone || 'Telefono non indicato')}</span><span>${escapeHtml(c.email || 'E-mail non indicata')}</span></div>
       </div>
       <div class="customer-status">
         <span class="badge ${c.daneaLinked === true ? 'ok' : 'warn'}">${c.daneaLinked === true ? 'DANEA ASSOCIATA' : 'DA ASSOCIARE A DANEA'}</span>
         <button class="secondary compact open-customer" data-id="${escapeHtml(c.id)}" type="button">APRI</button>
       </div>
     </article>`).join('');
-
   list.querySelectorAll('.open-customer').forEach(btn => btn.addEventListener('click', () => openDetail(btn.dataset.id)));
 }
 
 function openDetail(id) {
-  const c = allCards.find(x => x.id === id);
-  if (!c) return;
+  const c = allCards.find(x => x.id === id); if (!c) return;
   selectedCard = c;
   $('detailName').textContent = fullName(c) || 'Cliente';
   $('detailCardCode').textContent = c.cardCode || '—';
@@ -150,6 +123,7 @@ function openDetail(id) {
   $('detailMarketing').textContent = c.marketingConsent === true ? 'Acconsente' : 'Non acconsente';
   $('detailCreated').textContent = formatTimestamp(c.createdAt);
   $('detailDanea').textContent = c.daneaLinked === true ? 'Associata' : 'Da associare';
+  $('detailRecovery').textContent = c.recoveryKey ? 'Attivo' : 'Non ancora generato';
   $('toggleDanea').textContent = c.daneaLinked === true ? 'SEGNA COME NON ASSOCIATA' : 'SEGNA ASSOCIATA A DANEA';
   $('customerModal').classList.remove('hidden');
 }
@@ -157,22 +131,36 @@ function openDetail(id) {
 async function toggleDanea() {
   if (!selectedCard) return;
   const next = selectedCard.daneaLinked !== true;
-  const btn = $('toggleDanea');
-  btn.disabled = true;
+  const btn = $('toggleDanea'); btn.disabled = true;
   try {
-    await updateDoc(doc(db, 'cards', selectedCard.id), {
-      daneaLinked: next,
-      daneaUpdatedAt: serverTimestamp()
+    await updateDoc(doc(db, 'cards', selectedCard.id), { daneaLinked: next, daneaUpdatedAt: serverTimestamp() });
+    selectedCard.daneaLinked = next; $('customerModal').classList.add('hidden'); render();
+  } catch (err) { console.error(err); alert('Non riesco ad aggiornare lo stato Danea.'); }
+  finally { btn.disabled = false; }
+}
+
+async function resetRecovery() {
+  if (!selectedCard) return;
+  const btn = $('resetRecovery'); btn.disabled = true;
+  try {
+    const old = selectedCard.recoveryKey;
+    const code = randomRecoveryCode();
+    await setDoc(doc(db, 'recoveries', code), {
+      ownerUid: selectedCard.ownerUid || selectedCard.id,
+      cardCode: selectedCard.cardCode,
+      firstName: selectedCard.firstName,
+      lastName: selectedCard.lastName,
+      birthMonthDay: birthMonthDay(selectedCard.birthDate),
+      createdAt: serverTimestamp()
     });
-    selectedCard.daneaLinked = next;
-    $('customerModal').classList.add('hidden');
-    render();
-  } catch (err) {
-    console.error(err);
-    alert('Non riesco ad aggiornare lo stato Danea.');
-  } finally {
-    btn.disabled = false;
-  }
+    await updateDoc(doc(db, 'cards', selectedCard.id), { recoveryKey: code, recoveryUpdatedAt: serverTimestamp() });
+    if (old) { try { await deleteDoc(doc(db, 'recoveries', old)); } catch {} }
+    selectedCard.recoveryKey = code;
+    $('detailRecovery').textContent = 'Attivo';
+    try { await navigator.clipboard.writeText(code); alert(`Nuovo codice recupero:\n${code}\n\nÈ già stato copiato negli appunti.`); }
+    catch { alert(`Nuovo codice recupero:\n${code}`); }
+  } catch (err) { console.error(err); alert('Non riesco a generare il nuovo codice recupero.'); }
+  finally { btn.disabled = false; }
 }
 
 $('googleLogin').addEventListener('click', login);
@@ -183,31 +171,21 @@ $('daneaFilter').addEventListener('change', render);
 $('closeCustomerModal').addEventListener('click', () => $('customerModal').classList.add('hidden'));
 $('customerModal').addEventListener('click', e => { if (e.target === $('customerModal')) $('customerModal').classList.add('hidden'); });
 $('toggleDanea').addEventListener('click', toggleDanea);
+$('resetRecovery').addEventListener('click', resetRecovery);
 $('copyDetailCode').addEventListener('click', async () => {
   if (!selectedCard?.cardCode) return;
-  try {
-    await navigator.clipboard.writeText(selectedCard.cardCode);
-    $('copyDetailCode').textContent = 'CODICE COPIATO ✓';
-    setTimeout(() => $('copyDetailCode').textContent = 'COPIA CODICE TESSERA', 1500);
-  } catch { alert('Codice tessera: ' + selectedCard.cardCode); }
+  try { await navigator.clipboard.writeText(selectedCard.cardCode); $('copyDetailCode').textContent = 'CODICE COPIATO ✓'; setTimeout(() => $('copyDetailCode').textContent = 'COPIA CODICE TESSERA', 1500); }
+  catch { alert('Codice tessera: ' + selectedCard.cardCode); }
 });
 
 onAuthStateChanged(auth, async user => {
-
-  // Nessun utente oppure utente anonimo della tessera cliente:
-  // mostra semplicemente il login amministratore.
   if (!user || user.isAnonymous) {
-    if (user?.isAnonymous) {
-      await signOut(auth);
-    }
-
+    if (user?.isAnonymous) await signOut(auth);
     $('loginPanel').classList.remove('hidden');
     $('adminPanel').classList.add('hidden');
     $('loginError').textContent = '';
     return;
   }
-
-  // Utente Google presente ma non autorizzato come amministratore.
   if (!isAdmin(user)) {
     await signOut(auth);
     $('loginPanel').classList.remove('hidden');
@@ -215,12 +193,9 @@ onAuthStateChanged(auth, async user => {
     $('loginError').textContent = 'Questo account Google non è autorizzato.';
     return;
   }
-
-  // Amministratore autorizzato.
   $('loginPanel').classList.add('hidden');
   $('adminPanel').classList.remove('hidden');
   $('adminIdentity').textContent = user.email;
   $('loginError').textContent = '';
-
   await loadCards();
 });
