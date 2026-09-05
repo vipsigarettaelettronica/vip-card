@@ -3,12 +3,12 @@ import { getAuth, onAuthStateChanged, signInAnonymously } from 'https://www.gsta
 import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 
 const firebaseConfig = {
-  apiKey: "AIzaSyD-q497X-cHUezvOBL_TKc3L8sHmNQOLDs",
-  authDomain: "vip-card-22fbe.firebaseapp.com",
-  projectId: "vip-card-22fbe",
-  storageBucket: "vip-card-22fbe.firebasestorage.app",
-  messagingSenderId: "654929991228",
-  appId: "1:654929991228:web:f7b91cc0f57c34342e5539"
+  apiKey: 'AIzaSyD-q497X-cHUezvOBL_TKc3L8sHmNQOLDs',
+  authDomain: 'vip-card-22fbe.firebaseapp.com',
+  projectId: 'vip-card-22fbe',
+  storageBucket: 'vip-card-22fbe.firebasestorage.app',
+  messagingSenderId: '654929991228',
+  appId: '1:654929991228:web:f7b91cc0f57c34342e5539'
 };
 
 const firebaseApp = initializeApp(firebaseConfig);

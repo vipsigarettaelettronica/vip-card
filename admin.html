@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#222222">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Gestione V.I.P. Card</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="admin-shell">
+    <header class="brand-header admin-brand">
+      <img src="assets/logo-vip.png" alt="V.I.P. Vape Is Possible - Sigarette Elettroniche" class="brand-logo">
+    </header>
+
+    <section id="loginPanel" class="panel admin-login">
+      <p class="eyebrow">AREA RISERVATA</p>
+      <h1>Gestione V.I.P. Card</h1>
+      <p class="intro">Accesso riservato all'amministratore del programma fedeltà.</p>
+      <button id="googleLogin" class="primary" type="button">ACCEDI CON GOOGLE</button>
+      <p id="loginError" class="error" aria-live="assertive"></p>
+    </section>
+
+    <section id="adminPanel" class="hidden">
+      <div class="admin-topbar panel">
+        <div>
+          <p class="eyebrow">V.I.P. CARD ADMIN</p>
+          <h1>Clienti</h1>
+          <p id="adminIdentity" class="admin-identity"></p>
+        </div>
+        <button id="logoutBtn" class="secondary compact" type="button">ESCI</button>
+      </div>
+
+      <div class="stats-grid" aria-label="Riepilogo tessere">
+        <article class="stat-card"><span>Tessere</span><strong id="statTotal">0</strong></article>
+        <article class="stat-card"><span>Marketing sì</span><strong id="statMarketing">0</strong></article>
+        <article class="stat-card"><span>Compleanni 30 gg</span><strong id="statBirthdays">0</strong></article>
+        <article class="stat-card"><span>Da associare a Danea</span><strong id="statDanea">0</strong></article>
+      </div>
+
+      <section class="panel admin-tools">
+        <label class="search-label">Cerca cliente
+          <input id="searchInput" type="search" autocomplete="off" placeholder="Nome, telefono, email o codice tessera">
+        </label>
+        <div class="filter-row">
+          <label><input id="birthdayFilter" type="checkbox"> Compleanni nei prossimi 30 giorni</label>
+          <label><input id="daneaFilter" type="checkbox"> Solo da associare a Danea</label>
+        </div>
+        <p id="resultCount" class="muted-line"></p>
+      </section>
+
+      <section id="customerList" class="customer-list" aria-live="polite"></section>
+      <p id="adminError" class="error admin-error" aria-live="assertive"></p>
+    </section>
+  </main>
+
+  <div id="customerModal" class="modal admin-modal hidden" role="dialog" aria-modal="true" aria-label="Scheda cliente">
+    <button id="closeCustomerModal" class="close" aria-label="Chiudi">×</button>
+    <div class="modal-content admin-modal-content">
+      <p class="eyebrow">SCHEDA CLIENTE</p>
+      <h2 id="detailName"></h2>
+      <dl class="detail-grid">
+        <div><dt>Codice tessera</dt><dd id="detailCardCode"></dd></div>
+        <div><dt>Cellulare</dt><dd id="detailPhone"></dd></div>
+        <div><dt>E-mail</dt><dd id="detailEmail"></dd></div>
+        <div><dt>Data di nascita</dt><dd id="detailBirthDate"></dd></div>
+        <div><dt>Privacy</dt><dd id="detailPrivacy"></dd></div>
+        <div><dt>Marketing</dt><dd id="detailMarketing"></dd></div>
+        <div><dt>Registrazione</dt><dd id="detailCreated"></dd></div>
+        <div><dt>Danea</dt><dd id="detailDanea"></dd></div>
+      </dl>
+      <div class="admin-modal-actions">
+        <button id="copyDetailCode" class="secondary" type="button">COPIA CODICE TESSERA</button>
+        <button id="toggleDanea" class="primary" type="button"></button>
+      </div>
+      <p class="danea-note">I punti fedeltà restano gestiti in Danea. Questa area serve a gestire la tessera digitale e l'associazione del codice cliente.</p>
+    </div>
+  </div>
+
+  <script type="module" src="admin.js"></script>
+</body>
+</html>
