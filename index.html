@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#222222">
+  <meta name="description" content="V.I.P. Card digitale - Vape Is Possible">
+  <title>V.I.P. Card</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="app-shell">
+    <header class="brand-header">
+      <img src="assets/logo-vip.png" alt="V.I.P. Vape Is Possible - Sigarette Elettroniche" class="brand-logo">
+    </header>
+
+    <section id="registrationView" class="panel">
+      <p class="eyebrow">V.I.P. CARD DIGITALE</p>
+      <h1>Crea la tua tessera</h1>
+      <p class="intro">Registrazione riservata ai maggiorenni. Al termine verrà generato un codice tessera univoco con barcode.</p>
+
+      <form id="registrationForm" novalidate>
+        <div class="grid-2">
+          <label>Nome
+            <input id="firstName" name="firstName" autocomplete="given-name" required maxlength="50">
+          </label>
+          <label>Cognome
+            <input id="lastName" name="lastName" autocomplete="family-name" required maxlength="50">
+          </label>
+        </div>
+
+        <label>Cellulare
+          <input id="phone" name="phone" type="tel" autocomplete="tel" inputmode="tel" required maxlength="20" placeholder="es. 333 1234567">
+        </label>
+
+        <label>E-mail <span class="optional">(facoltativa)</span>
+          <input id="email" name="email" type="email" autocomplete="email" maxlength="100" placeholder="nome@email.it">
+        </label>
+
+        <label>Data di nascita
+          <input id="birthDate" name="birthDate" type="date" autocomplete="bday" required>
+        </label>
+
+        <div id="ageNotice" class="notice" aria-live="polite"></div>
+
+        <label class="check-row">
+          <input id="adultConfirm" type="checkbox" required>
+          <span>Confermo di avere almeno 18 anni.</span>
+        </label>
+
+        <label class="check-row">
+          <input id="privacyConsent" type="checkbox" required>
+          <span>Ho letto e accetto l’informativa privacy. <strong class="demo-tag">DEMO</strong></span>
+        </label>
+
+        <label class="check-row">
+          <input id="marketingConsent" type="checkbox">
+          <span>Acconsento a ricevere comunicazioni promozionali e coupon. <span class="optional">(facoltativo)</span></span>
+        </label>
+
+        <button class="primary" type="submit">CREA LA MIA V.I.P. CARD</button>
+        <p id="formError" class="error" aria-live="assertive"></p>
+      </form>
+    </section>
+
+    <section id="cardView" class="panel hidden" aria-live="polite">
+      <p class="eyebrow">V.I.P. CARD</p>
+      <h1 id="welcomeName">Ciao</h1>
+
+      <article class="vip-card">
+        <div class="card-topline">VAPE IS POSSIBLE</div>
+        <div class="member-name" id="memberName"></div>
+        <div class="barcode-wrap">
+          <svg id="barcode" role="img" aria-label="Barcode tessera V.I.P."></svg>
+        </div>
+        <div class="card-code" id="cardCode"></div>
+        <div class="card-caption">Mostra questo barcode alla cassa</div>
+      </article>
+
+      <div id="birthdayBox" class="birthday-box hidden">
+        <strong>BUON COMPLEANNO!</strong>
+        <span>Il sistema ha riconosciuto il tuo compleanno. La funzione coupon è pronta per essere configurata.</span>
+      </div>
+
+      <div class="actions">
+        <button id="fullscreenBarcode" class="primary" type="button">MOSTRA BARCODE GRANDE</button>
+        <button id="copyCode" class="secondary" type="button">COPIA CODICE TESSERA</button>
+      </div>
+
+      <details class="demo-tools">
+        <summary>Strumenti demo</summary>
+        <p>Questa versione salva la tessera solo su questo dispositivo. Il database online verrà aggiunto nella versione successiva.</p>
+        <button id="resetDemo" class="danger" type="button">Cancella tessera demo</button>
+      </details>
+    </section>
+  </main>
+
+  <div id="barcodeModal" class="modal hidden" role="dialog" aria-modal="true" aria-label="Barcode tessera">
+    <button id="closeModal" class="close" aria-label="Chiudi">×</button>
+    <div class="modal-content">
+      <img src="assets/logo-vip.png" alt="V.I.P." class="modal-logo">
+      <svg id="barcodeLarge" role="img" aria-label="Barcode tessera V.I.P. grande"></svg>
+      <div id="cardCodeLarge" class="large-code"></div>
+      <p>Mostra lo schermo al lettore barcode.</p>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,13 @@
+{
+  "name": "V.I.P. Card - Vape Is Possible",
+  "short_name": "V.I.P. Card",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#121212",
+  "theme_color": "#222222",
+  "description": "Tessera digitale V.I.P. Vape Is Possible",
+  "icons": [
+    {"src":"assets/icon-192.png","sizes":"192x192","type":"image/png","purpose":"any"},
+    {"src":"assets/icon-512.png","sizes":"512x512","type":"image/png","purpose":"any"}
+  ]
+}
