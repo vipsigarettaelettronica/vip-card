@@ -143,3 +143,370 @@ a { color:var(--gold2); }
   font:900 17px/1 Arial,Helvetica,sans-serif;
 }
 .wallet-note { margin:7px 2px 0; color:var(--muted); text-align:center; font-size:.79rem; line-height:1.35; }
+
+
+/* =========================================================
+   V.I.P. CARD — RESTYLING PREMIUM NERO / ORO
+   Da incollare in fondo a styles.css
+========================================================= */
+
+:root{
+  --vip-bg: #0a0a0c;
+  --vip-bg-2: #131316;
+  --vip-panel: #17171b;
+  --vip-panel-2: #1d1d22;
+  --vip-border: rgba(212, 175, 55, 0.28);
+  --vip-gold: #c9a227;
+  --vip-gold-2: #e0bf57;
+  --vip-text: #f4f4f5;
+  --vip-text-soft: #cfcfd4;
+  --vip-muted: #9a9aa3;
+  --vip-dark: #0f0f11;
+  --vip-success: #153f28;
+  --vip-success-border: #2d8a57;
+  --vip-danger: #4a1f1f;
+  --vip-danger-border: #b35a5a;
+  --vip-shadow: 0 12px 35px rgba(0,0,0,.35);
+  --vip-radius: 20px;
+  --vip-radius-sm: 14px;
+}
+
+/* PAGINA */
+body{
+  background:
+    radial-gradient(circle at top right, rgba(201,162,39,.10), transparent 24%),
+    radial-gradient(circle at top left, rgba(255,255,255,.03), transparent 16%),
+    linear-gradient(180deg, #0b0b0d 0%, #101014 45%, #0b0b0d 100%);
+  color: var(--vip-text);
+}
+
+/* CONTENITORE CENTRALE */
+main,
+.container,
+.page,
+.page-wrap,
+.wrapper{
+  color: var(--vip-text);
+}
+
+/* CARD / PANNELLI */
+.card,
+.panel,
+.section,
+.box,
+.form-card,
+.auth-card{
+  background: linear-gradient(180deg, rgba(27,27,31,.96), rgba(20,20,24,.98));
+  border: 1px solid rgba(255,255,255,.06);
+  border-radius: var(--vip-radius);
+  box-shadow: var(--vip-shadow);
+  color: var(--vip-text);
+}
+
+/* TITOLI */
+h1, h2, h3{
+  color: #ffffff;
+  letter-spacing: -0.02em;
+}
+
+.section-eyebrow,
+.kicker,
+.badge-title,
+.eyebrow{
+  color: var(--vip-gold-2);
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  font-weight: 800;
+}
+
+/* TESTI */
+p,
+small,
+label,
+.helper,
+.hint{
+  color: var(--vip-text-soft);
+}
+
+/* FORM */
+input,
+select,
+textarea{
+  background: #0c0c0f;
+  color: #ffffff;
+  border: 1px solid rgba(255,255,255,.10);
+  border-radius: 14px;
+  transition: .2s ease;
+}
+
+input::placeholder,
+textarea::placeholder{
+  color: #8e8e98;
+}
+
+input:focus,
+select:focus,
+textarea:focus{
+  outline: none;
+  border-color: rgba(201,162,39,.75);
+  box-shadow: 0 0 0 3px rgba(201,162,39,.14);
+  background: #111115;
+}
+
+/* LABELS */
+label{
+  font-weight: 700;
+  color: #ffffff;
+}
+
+/* LOGO BOX IN ALTO */
+.logo-wrap,
+.hero-logo,
+.brand-box,
+.brand-header{
+  background: #f5f5f5;
+  border-radius: 24px;
+  padding: 18px;
+  box-shadow: 0 10px 30px rgba(0,0,0,.18);
+}
+
+/* CARD VIRTUALE / PREVIEW TESSERA */
+.vip-card-preview,
+.loyalty-card,
+.preview-card,
+.member-card,
+.vip-card{
+  background:
+    radial-gradient(circle at top right, rgba(201,162,39,.18), transparent 26%),
+    linear-gradient(135deg, #202027 0%, #111114 55%, #0c0c0e 100%);
+  border: 1px solid var(--vip-border);
+  border-radius: 24px;
+  color: #fff;
+  box-shadow: 0 20px 40px rgba(0,0,0,.30);
+  position: relative;
+  overflow: hidden;
+}
+
+.vip-card-preview::before,
+.loyalty-card::before,
+.preview-card::before,
+.member-card::before,
+.vip-card::before{
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(120deg, transparent 0%, rgba(255,255,255,.03) 35%, transparent 70%);
+  pointer-events: none;
+}
+
+.vip-card-preview .card-title,
+.loyalty-card .card-title,
+.preview-card .card-title,
+.member-card .card-title,
+.vip-card .card-title{
+  color: var(--vip-gold-2);
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .10em;
+}
+
+.vip-card-preview .card-name,
+.loyalty-card .card-name,
+.preview-card .card-name,
+.member-card .card-name,
+.vip-card .card-name{
+  color: #ffffff;
+  font-weight: 800;
+}
+
+.vip-card-preview .card-code,
+.loyalty-card .card-code,
+.preview-card .card-code,
+.member-card .card-code,
+.vip-card .card-code{
+  color: #ffffff;
+  font-weight: 700;
+  letter-spacing: .08em;
+}
+
+/* BOX BARCODE */
+.barcode-box,
+.barcode-wrap,
+.barcode-shell{
+  background: #f8f8f8;
+  border-radius: 18px;
+  padding: 14px;
+  border: 1px solid rgba(255,255,255,.10);
+}
+
+/* BOX INFO */
+.info-box,
+.notice-box,
+.data-box,
+.status-box,
+.recovery-box,
+.coupon-box{
+  background: linear-gradient(180deg, rgba(255,255,255,.02), rgba(255,255,255,.01));
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 18px;
+  color: var(--vip-text);
+}
+
+.info-box strong,
+.notice-box strong,
+.data-box strong,
+.status-box strong,
+.recovery-box strong,
+.coupon-box strong{
+  color: var(--vip-gold-2);
+}
+
+/* MESSAGGIO SUCCESSO */
+.success,
+.success-box,
+.alert-success{
+  background: linear-gradient(180deg, rgba(31,78,50,.85), rgba(20,55,35,.95));
+  border: 1px solid var(--vip-success-border);
+  color: #e8fff1;
+  border-radius: 16px;
+}
+
+/* MESSAGGIO ERRORE */
+.error,
+.error-box,
+.alert-error{
+  background: linear-gradient(180deg, rgba(86,31,31,.88), rgba(58,20,20,.95));
+  border: 1px solid var(--vip-danger-border);
+  color: #ffe7e7;
+  border-radius: 16px;
+}
+
+/* BOTTONI GENERICI */
+button,
+.btn{
+  border: none;
+  border-radius: 16px;
+  font-weight: 800;
+  transition: transform .15s ease, box-shadow .2s ease, opacity .2s ease, background .2s ease;
+  cursor: pointer;
+}
+
+button:hover,
+.btn:hover{
+  transform: translateY(-1px);
+}
+
+button:active,
+.btn:active{
+  transform: translateY(0);
+}
+
+/* PULSANTE PRINCIPALE ORO */
+.btn-primary,
+.btn-gold,
+.btn-main,
+button.primary{
+  background: linear-gradient(90deg, var(--vip-gold), var(--vip-gold-2));
+  color: #111111;
+  box-shadow: 0 10px 24px rgba(201,162,39,.22);
+}
+
+.btn-primary:hover,
+.btn-gold:hover,
+.btn-main:hover,
+button.primary:hover{
+  box-shadow: 0 14px 30px rgba(201,162,39,.28);
+}
+
+/* PULSANTI SECONDARI */
+.btn-secondary,
+.btn-dark,
+.btn-copy,
+button.secondary{
+  background: linear-gradient(180deg, #3b3b40, #2e2e33);
+  color: #ffffff;
+  border: 1px solid rgba(255,255,255,.08);
+}
+
+/* PULSANTE GOOGLE WALLET */
+.btn-wallet,
+.google-wallet-btn,
+.wallet-btn{
+  background: #000000 !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(255,255,255,.10);
+  border-radius: 18px;
+  font-weight: 800;
+  box-shadow: 0 10px 24px rgba(0,0,0,.28);
+}
+
+.btn-wallet:hover,
+.google-wallet-btn:hover,
+.wallet-btn:hover{
+  background: #111111 !important;
+}
+
+.btn-wallet .g-icon,
+.google-wallet-btn .g-icon,
+.wallet-btn .g-icon{
+  background: #ffffff;
+  color: #000000;
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 900;
+  margin-right: 10px;
+}
+
+/* LINK */
+a{
+  color: var(--vip-gold-2);
+}
+
+a:hover{
+  opacity: .9;
+}
+
+/* SEPARATORI */
+hr{
+  border: none;
+  border-top: 1px solid rgba(255,255,255,.08);
+}
+
+/* TABELLE / LISTE */
+table,
+.list-box{
+  background: rgba(255,255,255,.02);
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+/* MOBILE */
+@media (max-width: 768px){
+  .card,
+  .panel,
+  .section,
+  .box,
+  .form-card,
+  .auth-card{
+    border-radius: 18px;
+  }
+
+  .vip-card-preview,
+  .loyalty-card,
+  .preview-card,
+  .member-card,
+  .vip-card{
+    border-radius: 20px;
+  }
+
+  button,
+  .btn{
+    min-height: 52px;
+  }
+}
+
