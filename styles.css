@@ -123,3 +123,23 @@ a { color:var(--gold2); }
 
 .birthday-box.used { border-color:#555; background:#242424; }
 .birthday-box.used strong { color:#bbb; }
+
+
+/* Google Wallet */
+.wallet-actions { margin:0 0 14px; }
+.google-wallet-button {
+  display:flex; align-items:center; justify-content:center; gap:10px;
+  width:100%; min-height:52px; padding:13px 18px;
+  border-radius:12px; background:#000; color:#fff;
+  border:1px solid #3a3a3a; text-decoration:none;
+  font-size:1rem; font-weight:800; line-height:1.2;
+  box-shadow:0 7px 18px rgba(0,0,0,.22);
+}
+.google-wallet-button:hover { background:#111; }
+.google-wallet-button:focus-visible { outline:3px solid rgba(211,170,38,.55); outline-offset:2px; }
+.wallet-g {
+  display:grid; place-items:center; width:26px; height:26px;
+  border-radius:50%; background:#fff; color:#202124;
+  font:900 17px/1 Arial,Helvetica,sans-serif;
+}
+.wallet-note { margin:7px 2px 0; color:var(--muted); text-align:center; font-size:.79rem; line-height:1.35; }
