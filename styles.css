@@ -428,15 +428,22 @@ button:active {
 }
 
 .notice.ok {
-  padding: 10px 12px;
+  padding: 12px 14px;
 
-  color: #d7f5df;
+  color: #f3f3f3;
 
-  background: var(--green);
+  background:
+    linear-gradient(
+      180deg,
+      #1a1a1d,
+      #111113
+    );
 
   border:
     1px solid
-    var(--green-line);
+    rgba(211,170,38,.38);
+
+  border-radius: 14px;
 }
 
 .notice.bad {
