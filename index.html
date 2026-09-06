@@ -8,14 +8,12 @@
   <title>V.I.P. Card</title>
 
   <link rel="manifest" href="manifest.webmanifest">
-  <link rel="stylesheet" href="styles.css?v=5.2.0">
+  <link rel="stylesheet" href="styles.css?v=5.3.0">
 </head>
 
 <body>
-
   <main class="app-shell">
 
-    <!-- HEADER V.I.P. -->
     <header class="brand-header vip-deco-header">
       <img
         src="assets/logo-vip.png"
@@ -24,47 +22,26 @@
       >
     </header>
 
-
-    <!-- REGISTRAZIONE -->
     <section id="registrationView" class="panel">
-
       <p class="eyebrow">V.I.P. CARD DIGITALE</p>
-
       <h1>Crea la tua tessera</h1>
-
       <p class="intro">
         Registrazione riservata ai maggiorenni.
         Al termine verrà generato un codice tessera univoco con barcode.
       </p>
 
       <form id="registrationForm" novalidate>
-
         <div class="grid-2">
-
           <label>
             Nome
-            <input
-              id="firstName"
-              name="firstName"
-              autocomplete="given-name"
-              required
-              maxlength="50"
-            >
+            <input id="firstName" name="firstName" autocomplete="given-name" required maxlength="50">
           </label>
 
           <label>
             Cognome
-            <input
-              id="lastName"
-              name="lastName"
-              autocomplete="family-name"
-              required
-              maxlength="50"
-            >
+            <input id="lastName" name="lastName" autocomplete="family-name" required maxlength="50">
           </label>
-
         </div>
-
 
         <label>
           Cellulare
@@ -80,11 +57,9 @@
           >
         </label>
 
-
         <label>
           E-mail
           <span class="optional">(facoltativa)</span>
-
           <input
             id="email"
             name="email"
@@ -95,114 +70,51 @@
           >
         </label>
 
-
         <label>
           Data di nascita
-
-          <input
-            id="birthDate"
-            name="birthDate"
-            type="date"
-            autocomplete="bday"
-            required
-          >
+          <input id="birthDate" name="birthDate" type="date" autocomplete="bday" required>
         </label>
 
-
-        <div
-          id="ageNotice"
-          class="notice"
-          aria-live="polite">
-        </div>
-
+        <div id="ageNotice" class="notice" aria-live="polite"></div>
 
         <label class="check-row">
-
-          <input
-            id="privacyConsent"
-            type="checkbox"
-            required
-          >
-
+          <input id="privacyConsent" type="checkbox" required>
           <span>
-            Ho letto e accetto
-            l’
-            <a
-              href="privacy.html"
-              target="_blank"
-              rel="noopener">
-              informativa privacy
-            </a>.
+            Ho letto e accetto l’
+            <a href="privacy.html" target="_blank" rel="noopener">informativa privacy</a>.
           </span>
-
         </label>
 
-
         <label class="check-row">
-
-          <input
-            id="marketingConsent"
-            type="checkbox"
-          >
-
+          <input id="marketingConsent" type="checkbox">
           <span>
             Acconsento a ricevere comunicazioni promozionali e coupon.
             <span class="optional">(facoltativo)</span>
           </span>
-
         </label>
 
+        <button class="primary" type="submit">CREA LA MIA V.I.P. CARD</button>
 
-        <button
-          class="primary"
-          type="submit">
-          CREA LA MIA V.I.P. CARD
-        </button>
-
-
-        <button
-          id="showRecovery"
-          class="secondary"
-          type="button">
+        <button id="showRecovery" class="secondary" type="button">
           HO GIÀ UNA TESSERA — RECUPERA
         </button>
 
-
-        <p
-          id="formError"
-          class="error"
-          aria-live="assertive">
-        </p>
-
+        <p id="formError" class="error" aria-live="assertive"></p>
       </form>
-
     </section>
 
-
-    <!-- RECUPERO TESSERA -->
-    <section
-      id="recoveryView"
-      class="panel hidden">
-
-      <p class="eyebrow">
-        RECUPERO TESSERA
-      </p>
-
-      <h1>
-        Recupera la V.I.P. Card
-      </h1>
+    <section id="recoveryView" class="panel hidden">
+      <p class="eyebrow">RECUPERO TESSERA</p>
+      <h1>Recupera la V.I.P. Card</h1>
 
       <p class="intro">
         Inserisci il codice di recupero ricevuto con la tessera.
         Serve se cambi telefono o cancelli i dati del browser.
       </p>
 
-
       <form id="recoveryForm">
-
         <label>
           Codice di recupero
-
           <input
             id="recoveryInput"
             type="text"
@@ -214,260 +126,105 @@
           >
         </label>
 
+        <button class="primary" type="submit">RECUPERA LA TESSERA</button>
 
-        <button
-          class="primary"
-          type="submit">
-          RECUPERA LA TESSERA
-        </button>
-
-
-        <button
-          id="backToRegistration"
-          class="secondary"
-          type="button">
+        <button id="backToRegistration" class="secondary" type="button">
           TORNA ALLA REGISTRAZIONE
         </button>
 
-
-        <p
-          id="recoveryError"
-          class="error"
-          aria-live="assertive">
-        </p>
-
+        <p id="recoveryError" class="error" aria-live="assertive"></p>
       </form>
-
     </section>
 
-
-    <!-- TESSERA CLIENTE -->
-    <section
-      id="cardView"
-      class="panel hidden"
-      aria-live="polite">
-
-      <p class="eyebrow">
-        V.I.P. CARD
-      </p>
-
-      <h1 id="welcomeName">
-        Ciao
-      </h1>
-
+    <section id="cardView" class="panel hidden" aria-live="polite">
+      <p class="eyebrow">V.I.P. CARD</p>
+      <h1 id="welcomeName">Ciao</h1>
 
       <article class="vip-card">
-
-        <div class="card-topline">
-          VAPE IS POSSIBLE
-        </div>
-
-        <div
-          class="member-name"
-          id="memberName">
-        </div>
+        <div class="card-topline">VAPE IS POSSIBLE</div>
+        <div class="member-name" id="memberName"></div>
 
         <div class="barcode-wrap">
-
-          <svg
-            id="barcode"
-            role="img"
-            aria-label="Barcode tessera V.I.P.">
-          </svg>
-
+          <svg id="barcode" role="img" aria-label="Barcode tessera V.I.P."></svg>
         </div>
 
-        <div
-          class="card-code"
-          id="cardCode">
-        </div>
-
-        <div class="card-caption">
-          Mostra questo barcode alla cassa
-        </div>
-
+        <div class="card-code" id="cardCode"></div>
+        <div class="card-caption">Mostra questo barcode alla cassa</div>
       </article>
 
-
-      <!-- COMPLEANNO -->
-      <div
-        id="birthdayBox"
-        class="birthday-box hidden">
-
-        <strong id="birthdayTitle">
-          BUON COMPLEANNO! -15%
-        </strong>
-
-        <span id="birthdayText">
-        </span>
-
+      <div id="birthdayBox" class="birthday-box hidden">
+        <strong id="birthdayTitle">BUON COMPLEANNO! -15%</strong>
+        <span id="birthdayText"></span>
       </div>
 
-
-      <!-- RECUPERO -->
       <div class="recovery-box">
-
         <div>
-
-          <strong>
-            Codice recupero tessera
-          </strong>
-
-          <p>
-            Conservalo: ti permette di recuperare la card su un altro telefono.
-          </p>
-
+          <strong>Codice recupero tessera</strong>
+          <p>Conservalo: ti permette di recuperare la card su un altro telefono.</p>
         </div>
 
+        <code id="recoveryCode">—</code>
 
-        <code id="recoveryCode">
-          —
-        </code>
-
-
-        <button
-          id="copyRecovery"
-          class="secondary"
-          type="button">
+        <button id="copyRecovery" class="secondary" type="button">
           COPIA CODICE RECUPERO
         </button>
-
       </div>
 
-
-      <!-- GOOGLE WALLET -->
       <div class="wallet-actions">
-
         <a
           id="googleWalletBtn"
           class="google-wallet-button"
           href="#"
           target="_blank"
-          rel="noopener">
-
-          <span
-            class="wallet-g"
-            aria-hidden="true">
-            G
-          </span>
-
-          <span>
-            Aggiungi a Google Wallet
-          </span>
-
+          rel="noopener"
+        >
+          <span class="wallet-g" aria-hidden="true">G</span>
+          <span>Aggiungi a Google Wallet</span>
         </a>
 
         <p class="wallet-note">
           Salva la tua V.I.P. Card nel Wallet del telefono.
         </p>
-
       </div>
 
-
-      <!-- AZIONI -->
       <div class="actions">
-
-        <button
-          id="fullscreenBarcode"
-          class="primary"
-          type="button">
+        <button id="fullscreenBarcode" class="primary" type="button">
           MOSTRA BARCODE GRANDE
         </button>
 
-
-        <button
-          id="copyCode"
-          class="secondary"
-          type="button">
+        <button id="copyCode" class="secondary" type="button">
           COPIA CODICE TESSERA
         </button>
-
       </div>
-
 
       <p class="points-note">
         I punti fedeltà restano gestiti in Danea e vengono aggiornati alla cassa.
       </p>
 
-
-      <p
-        id="syncStatus"
-        class="notice ok">
+      <p id="syncStatus" class="notice ok">
         Tessera collegata al database V.I.P.
       </p>
-
     </section>
 
   </main>
 
-
-  <!-- MODAL BARCODE -->
   <div
     id="barcodeModal"
     class="modal hidden"
     role="dialog"
     aria-modal="true"
-    aria-label="Barcode tessera">
-
-    <button
-      id="closeModal"
-      class="close"
-      aria-label="Chiudi">
-      ×
-    </button>
-
+    aria-label="Barcode tessera"
+  >
+    <button id="closeModal" class="close" aria-label="Chiudi">×</button>
 
     <div class="modal-content">
-
-      <img
-        src="assets/logo-vip.png"
-        alt="V.I.P."
-        class="modal-logo"
-      >
-
-      <svg
-        id="barcodeLarge"
-        role="img"
-        aria-label="Barcode tessera V.I.P. grande">
-      </svg>
-
-      <div
-        id="cardCodeLarge"
-        class="large-code">
-      </div>
-
-      <p>
-        Mostra lo schermo al lettore barcode.
-      </p>
-
+      <img src="assets/logo-vip.png" alt="V.I.P." class="modal-logo">
+      <svg id="barcodeLarge" role="img" aria-label="Barcode tessera V.I.P. grande"></svg>
+      <div id="cardCodeLarge" class="large-code"></div>
+      <p>Mostra lo schermo al lettore barcode.</p>
     </div>
-
   </div>
 
-
-  <script
-    type="module"
-    src="app.js?v=5.2.0">
-  </script>
-
+  <script type="module" src="app.js?v=5.2.0"></script>
 </body>
 </html>
-
-
-
-  position: relative;
-  z-index: 1;
-
-  display: block;
-  margin: 0 auto;
-
-  max-width: 300px;
-  width: 78%;
-  height: auto;
-
-  background: transparent !important;
-  padding: 0 !important;
-  border: 0 !important;
-  border-radius: 0 !important;
-  box-shadow: none !important;
-}
