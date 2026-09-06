@@ -1,3 +1,39 @@
+importScripts('https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js');
+importScripts('https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging-compat.js');
+
+firebase.initializeApp({
+  apiKey: 'AIzaSyD-q497X-cHUezvOBL_TKc3L8sHmNQOLDs',
+  authDomain: 'vip-card-22fbe.firebaseapp.com',
+  projectId: 'vip-card-22fbe',
+  storageBucket: 'vip-card-22fbe.firebasestorage.app',
+  messagingSenderId: '654929991228',
+  appId: '1:654929991228:web:f7b91cc0f57c34342e5539'
+});
+
+const messaging = firebase.messaging();
+messaging.onBackgroundMessage((payload) => {
+  const title = payload.notification?.title || 'V.I.P. Sigarette Elettroniche';
+  const options = {
+    body: payload.notification?.body || 'Hai un nuovo avviso V.I.P.',
+    icon: './assets/icon-192.png',
+    badge: './assets/icon-192.png',
+    data: {
+      url: payload.data?.url || './'
+    }
+  };
+
+  self.registration.showNotification(title, options);
+});
+
+self.addEventListener('notificationclick', event => {
+  event.notification.close();
+
+  const url = event.notification.data?.url || './';
+
+  event.waitUntil(
+    clients.openWindow(url)
+  );
+});
 const CACHE = 'vip-card-v5-4-wallet';
 const ASSETS = [
   './', './index.html', './styles.css', './app.js', './manifest.webmanifest', './privacy.html',
