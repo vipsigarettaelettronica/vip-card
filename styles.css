@@ -113,11 +113,11 @@ a:hover {
   border-radius: 24px;
 
   background:
-    linear-gradient(
-      rgba(8,8,10,.82),
-      rgba(8,8,10,.82)
-    ),
-    url("assets/Motivo Art Déco dorato su antracite.png");
+  linear-gradient(
+    rgba(8,8,10,.28),
+    rgba(8,8,10,.28)
+  ),
+  url("assets/Motivo Art Déco dorato su antracite.png");
 
   background-size: cover;
   background-position: center;
