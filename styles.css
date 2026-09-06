@@ -747,91 +747,43 @@ button:active {
 
 .google-wallet-button {
   display: flex;
-
   align-items: center;
   justify-content: center;
-
-  gap: 10px;
-
+  gap: 12px;
   width: 100%;
-  min-height: 56px;
-
-  padding: 13px 18px;
-
-  color: #fff;
-
-  background: #000;
-
-  border:
-    1px solid
-    rgba(255,255,255,.18);
-
-  border-radius: 16px;
-
+  min-height: 58px;
+  padding: 14px 18px;
+  background: linear-gradient(180deg, #0f0f11 0%, #050506 100%);
+  color: #ffffff;
+  border: 1px solid rgba(211,170,38,.35);
+  border-radius: 18px;
   text-decoration: none;
-
-  font-size: 1rem;
+  font-size: 1.04rem;
   font-weight: 800;
-
   line-height: 1.2;
-
-  box-shadow:
-    0 12px 28px
-    rgba(0,0,0,.34);
+  box-shadow: 0 10px 24px rgba(0,0,0,.28);
 }
 
 .google-wallet-button:hover {
-  background: #101010;
+  background: linear-gradient(180deg, #16161a 0%, #0a0a0c 100%);
+  border-color: rgba(211,170,38,.55);
 }
 
 .google-wallet-button:focus-visible {
-  outline:
-    3px solid
-    rgba(211,170,38,.55);
-
+  outline: 3px solid rgba(211,170,38,.45);
   outline-offset: 2px;
 }
 
 .wallet-g {
   display: grid;
-
   place-items: center;
-
-  width: 30px;
-  height: 30px;
-
-  color: #fff;
-
+  width: 32px;
+  height: 32px;
+  flex: 0 0 32px;
   border-radius: 50%;
-
-  background:
-    linear-gradient(
-      135deg,
-      #4285f4 0 25%,
-      #34a853 25% 50%,
-      #fbbc05 50% 75%,
-      #ea4335 75%
-    );
-
-  font:
-    900 17px/1
-    Arial,
-    Helvetica,
-    sans-serif;
+  background: transparent;
+  box-shadow: none;
 }
-
-.wallet-note {
-  margin: 7px 2px 0;
-
-  color: var(--muted);
-
-  text-align: center;
-
-  font-size: .79rem;
-
-  line-height: 1.35;
-}
-
 
 /* =========================================================
    AZIONI TESSERA
