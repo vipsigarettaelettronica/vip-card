@@ -775,14 +775,7 @@ button:active {
 }
 
 .wallet-g {
-  display: grid;
-  place-items: center;
-  width: 32px;
-  height: 32px;
-  flex: 0 0 32px;
-  border-radius: 50%;
-  background: transparent;
-  box-shadow: none;
+  display: none;
 }
 
 /* =========================================================
