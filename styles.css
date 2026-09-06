@@ -711,3 +711,46 @@ button.secondary{
   border:1px solid #2c7246;
   border-radius:14px;
 }
+
+
+/* ===== HEADER ART DECO V.I.P. ===== */
+
+.vip-deco-header{
+  position: relative;
+  overflow: hidden;
+  background:
+    linear-gradient(rgba(8,8,10,.92), rgba(8,8,10,.92)),
+    url('assets/Motivo Art Déco dorato su antracite.png');
+  background-size: cover;
+  background-position: center;
+  border: 1px solid rgba(240,207,101,.38);
+  border-radius: 24px;
+  padding: 28px 22px;
+  box-shadow:
+    0 18px 40px rgba(0,0,0,.34),
+    inset 0 1px 0 rgba(255,255,255,.03);
+}
+
+.vip-deco-header::after{
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at center, rgba(0,0,0,0) 0%, rgba(0,0,0,.10) 60%, rgba(0,0,0,.26) 100%);
+  pointer-events: none;
+}
+
+.vip-deco-header .brand-logo{
+  position: relative;
+  z-index: 1;
+  display: block;
+  margin: 0 auto;
+  max-width: 300px;
+  width: 78%;
+  height: auto;
+  background: transparent !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
