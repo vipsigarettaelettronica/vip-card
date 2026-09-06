@@ -133,10 +133,43 @@ function showCard(data, recoveryCode='', recovered=false) {
   $('cardCodeLarge').textContent = data.cardCode;
   $('recoveryCode').textContent = currentRecoveryCode || '—';
   const fullName = `${data.firstName || ''} ${data.lastName || ''}`.trim() || 'Cliente V.I.P.';
-  const walletUrl = new URL(GOOGLE_WALLET_WEB_APP);
-  walletUrl.searchParams.set('card', data.cardCode);
-  walletUrl.searchParams.set('name', fullName);
-  $('googleWalletBtn').href = walletUrl.toString();
+const walletBtn = $('googleWalletBtn');
+
+walletBtn.href = '#';
+
+walletBtn.onclick = e => {
+  e.preventDefault();
+
+  const callbackName = '__vipWallet_' + Date.now();
+  const script = document.createElement('script');
+  const walletApiUrl = new URL(GOOGLE_WALLET_WEB_APP);
+
+  walletApiUrl.searchParams.set('card', data.cardCode);
+  walletApiUrl.searchParams.set('name', fullName);
+  walletApiUrl.searchParams.set('callback', callbackName);
+
+  window[callbackName] = response => {
+    try {
+      if (!response || !response.saveUri) {
+        throw new Error('Link Google Wallet non disponibile');
+      }
+
+      window.location.href = response.saveUri;
+    } finally {
+      delete window[callbackName];
+      script.remove();
+    }
+  };
+
+  script.onerror = () => {
+    delete window[callbackName];
+    script.remove();
+    alert('Google Wallet non è disponibile. Riprova tra poco.');
+  };
+
+  script.src = walletApiUrl.toString();
+  document.body.appendChild(script);
+};
   drawBarcode($('barcode'), data.cardCode, false);
   drawBarcode($('barcodeLarge'), data.cardCode, true);
   const coupon = birthdayCouponStatus(data);
