@@ -573,3 +573,141 @@ button.primary,
 }
 
 
+/* ===== V.I.P. CARD - RESTYLING PIU' MARCATO ===== */
+
+body{
+  background:
+    radial-gradient(circle at 80% 8%, rgba(211,170,38,.16), transparent 25%),
+    linear-gradient(180deg,#050505 0%,#0d0d0f 55%,#070707 100%);
+}
+
+.app-shell{
+  max-width: 760px;
+}
+
+.panel{
+  background: linear-gradient(180deg,#1b1b1f 0%,#111114 100%);
+  border: 1px solid rgba(211,170,38,.28);
+  border-radius: 24px;
+  box-shadow: 0 22px 50px rgba(0,0,0,.42);
+}
+
+.vip-card{
+  background:
+    radial-gradient(circle at 88% 12%, rgba(240,207,101,.22), transparent 24%),
+    linear-gradient(145deg,#242428 0%,#111113 62%,#09090a 100%);
+  border: 1px solid rgba(240,207,101,.72);
+  border-radius: 26px;
+  padding: 26px;
+  box-shadow:
+    0 24px 50px rgba(0,0,0,.44),
+    inset 0 1px 0 rgba(255,255,255,.04);
+}
+
+.vip-card::before{
+  width: 260px;
+  height: 260px;
+  background: rgba(211,170,38,.10);
+  right: -110px;
+  top: -120px;
+}
+
+.card-topline{
+  color:#f0cf65;
+  font-size:.82rem;
+  letter-spacing:.18em;
+  font-weight:900;
+}
+
+.member-name{
+  font-size:1.7rem;
+  letter-spacing:.02em;
+}
+
+.barcode-wrap{
+  margin-top:18px;
+  background:#fff;
+  border-radius:20px;
+  padding:18px;
+  box-shadow:
+    0 10px 25px rgba(0,0,0,.22),
+    inset 0 0 0 1px rgba(0,0,0,.06);
+}
+
+.card-code{
+  margin-top:14px;
+  color:#f4f4f4;
+  font-size:1rem;
+  letter-spacing:.12em;
+}
+
+.birthday-box{
+  background: linear-gradient(180deg,#29231a,#1a1712);
+  border:1px solid rgba(240,207,101,.5);
+  border-radius:16px;
+  padding:16px;
+}
+
+.birthday-box.used{
+  background: linear-gradient(180deg,#252528,#1b1b1e);
+  border-color:rgba(255,255,255,.16);
+}
+
+.recovery-box{
+  background: linear-gradient(180deg,#17171a,#0f0f11);
+  border:1px solid rgba(211,170,38,.30);
+  border-radius:18px;
+  padding:18px;
+}
+
+.recovery-box code{
+  background:#09090a;
+  border:1px solid rgba(255,255,255,.12);
+  border-radius:12px;
+  padding:13px 14px;
+}
+
+.google-wallet-button{
+  background:#000 !important;
+  border:1px solid rgba(255,255,255,.18);
+  border-radius:16px;
+  min-height:56px;
+  box-shadow:0 12px 28px rgba(0,0,0,.34);
+}
+
+.google-wallet-button:hover{
+  background:#101010 !important;
+}
+
+.wallet-g{
+  width:30px;
+  height:30px;
+  background:
+    linear-gradient(135deg,#4285f4 0 25%,#34a853 25% 50%,#fbbc05 50% 75%,#ea4335 75%);
+  color:#fff;
+  border-radius:50%;
+  font-weight:900;
+}
+
+button.primary{
+  background:linear-gradient(90deg,#d6ae2f,#f2d46f) !important;
+  color:#111 !important;
+  border-radius:16px;
+  box-shadow:0 12px 28px rgba(211,170,38,.24);
+}
+
+button.secondary{
+  background:linear-gradient(180deg,#444449,#323237);
+  border:1px solid rgba(255,255,255,.10);
+  border-radius:16px;
+}
+
+.points-note{
+  color:#bcbcc3;
+}
+
+.notice.ok{
+  background:#173722;
+  border:1px solid #2c7246;
+  border-radius:14px;
+}
