@@ -346,5 +346,64 @@ ensureAnonymousSession().catch(err => {
   console.error(err);
   $('formError').textContent = 'Connessione al servizio tessere non disponibile. Ricarica la pagina.';
 });
+$('enableNotifications').addEventListener('click', async () => {
+  const btn = $('enableNotifications');
+  const status = $('notificationStatus');
 
+  try {
+    btn.disabled = true;
+
+    if (!currentUser || !currentCard) {
+      throw new Error('Tessera non disponibile');
+    }
+
+    if (!(await isSupported())) {
+      status.textContent = 'Le notifiche non sono supportate su questo dispositivo.';
+      return;
+    }
+
+    const permission = await Notification.requestPermission();
+
+    if (permission !== 'granted') {
+      status.textContent = 'Notifiche non attivate. Puoi abilitarle dalle impostazioni del browser.';
+      return;
+    }
+
+    const registration = await navigator.serviceWorker.ready;
+    const messaging = getMessaging(firebaseApp);
+
+    const token = await getToken(messaging, {
+      vapidKey: VAPID_KEY,
+      serviceWorkerRegistration: registration
+    });
+
+    if (!token) {
+      throw new Error('Token notifiche non disponibile');
+    }
+
+    await setDoc(
+      doc(db, 'pushSubscriptions', currentUser.uid),
+      {
+        ownerUid: currentUser.uid,
+        cardCode: currentCard.cardCode,
+        firstName: currentCard.firstName || '',
+        lastName: currentCard.lastName || '',
+        token: token,
+        marketingConsent: currentCard.marketingConsent === true,
+        enabled: true,
+        updatedAt: serverTimestamp()
+      },
+      { merge: true }
+    );
+
+    btn.textContent = 'AVVISI V.I.P. ATTIVI ✓';
+    status.textContent = 'Riceverai avvisi V.I.P. su orari speciali, chiusure e comunicazioni utili.';
+
+  } catch (err) {
+    console.error('Errore notifiche:', err);
+    status.textContent = 'Non è stato possibile attivare gli avvisi. Riprova.';
+  } finally {
+    btn.disabled = false;
+  }
+});
 if ('serviceWorker' in navigator) window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(() => {}));
