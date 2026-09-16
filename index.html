@@ -244,7 +244,44 @@
   <a href="regolamento-vip-card.html" target="_blank" rel="noopener">Regolamento V.I.P. Card</a>
 </div>
   </main>
+<div
+  id="consentUpdateModal"
+  class="modal hidden"
+  role="dialog"
+  aria-modal="true"
+  aria-labelledby="consentUpdateTitle"
+>
+  <div class="modal-content consent-update-content">
+    <h2 id="consentUpdateTitle">Aggiornamento V.I.P. Card</h2>
 
+    <p>
+      Per continuare a utilizzare la tua V.I.P. Card è necessario
+      confermare la presa visione dei documenti aggiornati.
+    </p>
+
+    <label class="check-row">
+      <input id="updatePrivacyConsent" type="checkbox">
+      <span>
+        Dichiaro di aver preso visione dell’
+        <a href="privacy.html" target="_blank" rel="noopener">Informativa Privacy</a>.
+      </span>
+    </label>
+
+    <label class="check-row">
+      <input id="updateRegulationConsent" type="checkbox">
+      <span>
+        Ho letto e accetto il
+        <a href="regolamento-vip-card.html" target="_blank" rel="noopener">Regolamento V.I.P. Card</a>.
+      </span>
+    </label>
+
+    <button id="confirmConsentUpdate" class="primary" type="button">
+      CONFERMA E CONTINUA
+    </button>
+
+    <p id="consentUpdateError" class="error" aria-live="assertive"></p>
+  </div>
+</div>
   <div
     id="barcodeModal"
     class="modal hidden"
