@@ -1646,5 +1646,25 @@ button:active {
   }
 
 }
+.legal-links {
+  margin-top: 28px;
+  padding: 8px 0 18px;
+  text-align: center;
+  font-size: 0.82rem;
+  color: #d8b541;
+}
 
+.legal-links a {
+  color: #d8b541;
+  text-decoration: none;
+}
+
+.legal-links a:hover {
+  text-decoration: underline;
+}
+
+.legal-links span {
+  margin: 0 8px;
+  color: #8f8f8f;
+}
 
