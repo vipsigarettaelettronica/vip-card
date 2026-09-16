@@ -29,7 +29,8 @@ const form = $('registrationForm');
 let currentUser = null;
 let currentCard = null;
 let currentRecoveryCode = '';
-
+const CURRENT_PRIVACY_VERSION = '2026-09-v4';
+const CURRENT_REGULATION_VERSION = '2026-09-v2';
 function sanitizeName(v) { return v.trim().replace(/\s+/g, ' '); }
 function calculateAge(isoDate) {
   const birth = new Date(isoDate + 'T12:00:00');
@@ -122,9 +123,63 @@ function showRecovery() {
   $('recoveryError').textContent = '';
   $('recoveryInput').focus();
 }
-function showCard(data, recoveryCode='', recovered=false) {
+async function showCard(data, recoveryCode='', recovered=false) {
   currentCard = data;
   currentRecoveryCode = recoveryCode || data.recoveryKey || '';
+  let consentIsCurrent =
+  data.privacyConsent === true &&
+  data.privacyVersion === CURRENT_PRIVACY_VERSION &&
+  data.regulationConsent === true &&
+  data.regulationVersion === CURRENT_REGULATION_VERSION;
+
+if (!consentIsCurrent && data.cardCode) {
+  try {
+    const localConsent = JSON.parse(
+      localStorage.getItem(`vipConsent:${data.cardCode}`) || 'null'
+    );
+
+    consentIsCurrent =
+      localConsent?.privacyVersion === CURRENT_PRIVACY_VERSION &&
+      localConsent?.regulationVersion === CURRENT_REGULATION_VERSION;
+  } catch {}
+}
+
+if (!consentIsCurrent && currentRecoveryCode) {
+  try {
+    const consentSnap = await getDoc(
+      doc(db, 'consentAcceptances', currentRecoveryCode)
+    );
+
+    if (consentSnap.exists()) {
+      const consent = consentSnap.data();
+
+      consentIsCurrent =
+        consent.privacyConsent === true &&
+        consent.privacyVersion === CURRENT_PRIVACY_VERSION &&
+        consent.regulationConsent === true &&
+        consent.regulationVersion === CURRENT_REGULATION_VERSION;
+
+      if (consentIsCurrent) {
+        currentCard.privacyConsent = true;
+        currentCard.privacyVersion = CURRENT_PRIVACY_VERSION;
+        currentCard.regulationConsent = true;
+        currentCard.regulationVersion = CURRENT_REGULATION_VERSION;
+
+        localStorage.setItem(
+          `vipConsent:${data.cardCode}`,
+          JSON.stringify({
+            privacyVersion: CURRENT_PRIVACY_VERSION,
+            regulationVersion: CURRENT_REGULATION_VERSION
+          })
+        );
+      }
+    }
+  } catch (err) {
+    console.warn('Controllo consensi non disponibile:', err);
+  }
+}
+
+$('consentUpdateModal').classList.toggle('hidden', consentIsCurrent);
   registrationView.classList.add('hidden');
   recoveryView.classList.add('hidden');
   cardView.classList.remove('hidden');
@@ -199,6 +254,12 @@ async function createRecoveryRecord(user, data, code) {
     lastName: data.lastName,
     birthMonthDay: birthMonthDay(data.birthDate),
     birthdayCouponUsedYear: data.birthdayCouponUsedYear || null,
+    privacyConsent: data.privacyConsent === true,
+privacyVersion: data.privacyVersion || null,
+regulationConsent: data.regulationConsent === true,
+regulationVersion: data.regulationVersion || null,
+marketingConsent: data.marketingConsent === true,
+consentRecordedAt: data.consentRecordedAt || null,
     createdAt: serverTimestamp()
   });
 }
@@ -262,7 +323,70 @@ async function ensureAnonymousSession() {
 $('birthDate').addEventListener('change', validateBirthDate);
 $('showRecovery').addEventListener('click', showRecovery);
 $('backToRegistration').addEventListener('click', showRegistration);
+$('confirmConsentUpdate').addEventListener('click', async () => {
+  const btn = $('confirmConsentUpdate');
+  const error = $('consentUpdateError');
 
+  error.textContent = '';
+
+  if (
+    !$('updatePrivacyConsent').checked ||
+    !$('updateRegulationConsent').checked
+  ) {
+    error.textContent =
+      'Devi confermare Privacy e Regolamento per continuare.';
+    return;
+  }
+
+  if (!currentUser || !currentCard || !currentRecoveryCode) {
+    error.textContent =
+      'Non riesco a identificare la tessera. Riprova.';
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'SALVATAGGIO...';
+
+  try {
+    await setDoc(
+      doc(db, 'consentAcceptances', currentRecoveryCode),
+      {
+        recoveryCode: currentRecoveryCode,
+        cardCode: currentCard.cardCode,
+        privacyConsent: true,
+        privacyVersion: CURRENT_PRIVACY_VERSION,
+        regulationConsent: true,
+        regulationVersion: CURRENT_REGULATION_VERSION,
+        acceptedByUid: currentUser.uid,
+        acceptedAt: serverTimestamp()
+      },
+      { merge: true }
+    );
+
+    currentCard.privacyConsent = true;
+    currentCard.privacyVersion = CURRENT_PRIVACY_VERSION;
+    currentCard.regulationConsent = true;
+    currentCard.regulationVersion = CURRENT_REGULATION_VERSION;
+
+    localStorage.setItem(
+      `vipConsent:${currentCard.cardCode}`,
+      JSON.stringify({
+        privacyVersion: CURRENT_PRIVACY_VERSION,
+        regulationVersion: CURRENT_REGULATION_VERSION
+      })
+    );
+
+    $('consentUpdateModal').classList.add('hidden');
+
+  } catch (err) {
+    console.error('Errore salvataggio consensi:', err);
+    error.textContent =
+      'Non è stato possibile registrare la conferma. Riprova.';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'CONFERMA E CONTINUA';
+  }
+});
 form.addEventListener('submit', async e => {
   e.preventDefault(); $('formError').textContent = '';
   if (!form.reportValidity()) return;
