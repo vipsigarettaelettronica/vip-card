@@ -126,6 +126,27 @@ function showRecovery() {
 async function showCard(data, recoveryCode='', recovered=false) {
   currentCard = data;
   currentRecoveryCode = recoveryCode || data.recoveryKey || '';
+  const notificationBtn = $('enableNotifications');
+const notificationStatus = $('notificationStatus');
+
+try {
+  if ('Notification' in window && Notification.permission === 'granted' && currentUser) {
+    const pushSnap = await getDoc(doc(db, 'pushSubscriptions', currentUser.uid));
+
+    if (pushSnap.exists() && pushSnap.data().enabled === true) {
+      notificationBtn.textContent = 'AVVISI V.I.P. ATTIVI ✓';
+      notificationStatus.textContent = 'Riceverai avvisi V.I.P. su orari speciali, chiusure e comunicazioni utili.';
+    } else {
+      notificationBtn.textContent = 'ATTIVA AVVISI V.I.P.';
+      notificationStatus.textContent = 'RICEVI AVVISI SU ORARI SPECIALI, EVENTI E V.I.P. BIRTHDAY.';
+    }
+  } else {
+    notificationBtn.textContent = 'ATTIVA AVVISI V.I.P.';
+    notificationStatus.textContent = 'RICEVI AVVISI SU ORARI SPECIALI, EVENTI E V.I.P. BIRTHDAY.';
+  }
+} catch (err) {
+  console.error('Controllo stato notifiche:', err);
+}
   let consentIsCurrent =
   data.privacyConsent === true &&
   data.privacyVersion === CURRENT_PRIVACY_VERSION &&
