@@ -267,7 +267,8 @@ form.addEventListener('submit', async e => {
   e.preventDefault(); $('formError').textContent = '';
   if (!form.reportValidity()) return;
   if (validateBirthDate() !== true) { $('formError').textContent = 'Non è possibile creare la tessera.'; return; }
-  if (!$('privacyConsent').checked) { $('formError').textContent = 'Devi accettare l’informativa privacy.'; return; }
+ if (!$('privacyConsent').checked) { $('formError').textContent = 'Devi dichiarare di aver preso visione dell’Informativa Privacy.'; return; }
+if (!$('regulationConsent').checked) { $('formError').textContent = 'Devi accettare il Regolamento V.I.P. Card.'; return; }
   const submitBtn = form.querySelector('button[type="submit"]');
   submitBtn.disabled = true; submitBtn.textContent = 'CREAZIONE IN CORSO...';
   try {
@@ -289,8 +290,15 @@ form.addEventListener('submit', async e => {
       email: $('email').value.trim(),
       birthDate: $('birthDate').value,
       privacyConsent: true,
-      marketingConsent: $('marketingConsent').checked,
-      consentVersion: '2026-09-v1',
+privacyVersion: '2026-09-v4',
+
+regulationConsent: true,
+regulationVersion: '2026-09-v2',
+
+marketingConsent: $('marketingConsent').checked,
+
+consentVersion: '2026-09-v2',
+consentRecordedAt: serverTimestamp(),
       cardCode: randomCode(),
       recoveryKey,
       createdAt: serverTimestamp()
