@@ -409,7 +409,7 @@ $('enableNotifications').addEventListener('click', async () => {
 
   } catch (err) {
     console.error('Errore notifiche:', err);
-    status.textContent = 'Non è stato possibile attivare gli avvisi. Riprova.';
+    status.textContent = 'ERRORE AVVISI: ' + (err?.message || 'errore sconosciuto');
   } finally {
     btn.disabled = false;
   }
