@@ -21,6 +21,7 @@ provider.setCustomParameters({ prompt: 'select_account' });
 const $ = id => document.getElementById(id);
 let allCards = [];
 let selectedCard = null;
+let adminMessages = [];
 
 function clean(v) { return String(v ?? '').trim(); }
 function escapeHtml(v) { return clean(v).replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c])); }
@@ -144,6 +145,8 @@ function openDetail(id) {
   const coupon = birthdayCouponStatus(c);
   $('detailBirthdayCoupon').textContent = coupon.active ? (coupon.used ? 'Già utilizzato' : '-15% ATTIVO') : 'Non attivo oggi';
   $('redeemBirthday').classList.toggle('hidden', !coupon.active || coupon.used);
+  $('detailReview').textContent = c.reviewDone === true ? 'Effettuata ✓' : 'Non effettuata';
+  $('toggleReview').textContent = c.reviewDone === true ? 'ANNULLA SPUNTA RECENSIONE' : 'SEGNA RECENSIONE EFFETTUATA ✓';
   $('toggleDanea').textContent = c.daneaLinked === true ? 'SEGNA COME NON ASSOCIATA' : 'SEGNA ASSOCIATA A DANEA';
   $('customerModal').classList.remove('hidden');
 }
@@ -172,6 +175,8 @@ async function resetRecovery() {
       lastName: selectedCard.lastName,
       birthMonthDay: birthMonthDay(selectedCard.birthDate),
       birthdayCouponUsedYear: selectedCard.birthdayCouponUsedYear || null,
+      reviewDone: selectedCard.reviewDone === true,
+      reviewDoneAt: selectedCard.reviewDoneAt || null,
       createdAt: serverTimestamp()
     });
     await updateDoc(doc(db, 'cards', selectedCard.id), { recoveryKey: code, recoveryUpdatedAt: serverTimestamp() });
@@ -204,6 +209,141 @@ async function redeemBirthdayCoupon() {
   } catch (err) { console.error(err); alert('Non riesco a registrare il coupon.'); }
   finally { btn.disabled = false; }
 }
+
+
+async function toggleReviewStatus() {
+  if (!selectedCard) return;
+  const next = selectedCard.reviewDone !== true;
+  const btn = $('toggleReview');
+  btn.disabled = true;
+
+  try {
+    const patch = {
+      reviewDone: next,
+      reviewDoneAt: next ? serverTimestamp() : null
+    };
+
+    await updateDoc(doc(db, 'cards', selectedCard.id), patch);
+
+    if (selectedCard.recoveryKey) {
+      try {
+        await updateDoc(doc(db, 'recoveries', selectedCard.recoveryKey), patch);
+      } catch (err) {
+        console.warn('Aggiornamento recensione sul recovery non riuscito:', err);
+      }
+    }
+
+    selectedCard.reviewDone = next;
+    selectedCard.reviewDoneAt = next ? new Date() : null;
+
+    const idx = allCards.findIndex(x => x.id === selectedCard.id);
+    if (idx >= 0) {
+      allCards[idx].reviewDone = next;
+      allCards[idx].reviewDoneAt = selectedCard.reviewDoneAt;
+    }
+
+    $('detailReview').textContent = next ? 'Effettuata ✓' : 'Non effettuata';
+    btn.textContent = next ? 'ANNULLA SPUNTA RECENSIONE' : 'SEGNA RECENSIONE EFFETTUATA ✓';
+    render();
+  } catch (err) {
+    console.error(err);
+    alert('Non riesco ad aggiornare lo stato della recensione.');
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+function adminMessageDate(m) {
+  try {
+    if (m.publishedAt?.toDate) return m.publishedAt.toDate();
+    if (m.createdAt?.toDate) return m.createdAt.toDate();
+  } catch {}
+  return new Date(0);
+}
+
+async function loadAdminMessages() {
+  try {
+    const snap = await getDocs(collection(db, 'messages'));
+    adminMessages = snap.docs
+      .map(d => ({ id: d.id, ...d.data() }))
+      .sort((a,b) => adminMessageDate(b) - adminMessageDate(a));
+
+    const list = $('adminMessageList');
+    if (!list) return;
+
+    if (!adminMessages.length) {
+      list.innerHTML = '<p class="muted-line">Nessuna comunicazione pubblicata.</p>';
+      return;
+    }
+
+    list.innerHTML = adminMessages.map(m => `
+      <article class="admin-message-row">
+        <div>
+          <strong>${escapeHtml(m.title || 'Comunicazione V.I.P.')}</strong>
+          <p>${escapeHtml(m.body || '')}</p>
+          <small>${adminMessageDate(m).toLocaleDateString('it-IT')}</small>
+        </div>
+        <button class="danger compact delete-message" data-id="${escapeHtml(m.id)}" type="button">ELIMINA</button>
+      </article>
+    `).join('');
+
+    list.querySelectorAll('.delete-message').forEach(btn => {
+      btn.addEventListener('click', () => deleteMessage(btn.dataset.id));
+    });
+  } catch (err) {
+    console.error(err);
+    if ($('messageAdminStatus')) $('messageAdminStatus').textContent = 'Non riesco a leggere le comunicazioni.';
+  }
+}
+
+async function publishMessage() {
+  const title = clean($('messageTitle').value);
+  const body = clean($('messageBody').value);
+  const status = $('messageAdminStatus');
+
+  if (!title || !body) {
+    status.textContent = 'Inserisci titolo e messaggio.';
+    return;
+  }
+
+  const btn = $('publishMessage');
+  btn.disabled = true;
+  status.textContent = 'Pubblicazione...';
+
+  try {
+    const ref = doc(collection(db, 'messages'));
+    await setDoc(ref, {
+      title,
+      body,
+      active: true,
+      publishedAt: serverTimestamp()
+    });
+
+    $('messageTitle').value = '';
+    $('messageBody').value = '';
+    status.textContent = 'Comunicazione pubblicata ✓';
+    await loadAdminMessages();
+  } catch (err) {
+    console.error(err);
+    status.textContent = 'Pubblicazione non riuscita.';
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+async function deleteMessage(id) {
+  if (!id || !confirm('Eliminare questa comunicazione dall’AREA V.I.P.?')) return;
+  try {
+    await deleteDoc(doc(db, 'messages', id));
+    await loadAdminMessages();
+  } catch (err) {
+    console.error(err);
+    alert('Non riesco a eliminare la comunicazione.');
+  }
+}
+
+$('toggleReview').addEventListener('click', toggleReviewStatus);
+$('publishMessage').addEventListener('click', publishMessage);
 
 $('redeemBirthday').addEventListener('click', redeemBirthdayCoupon);
 $('googleLogin').addEventListener('click', login);
@@ -241,4 +381,5 @@ onAuthStateChanged(auth, async user => {
   $('adminIdentity').textContent = user.email;
   $('loginError').textContent = '';
   await loadCards();
+  await loadAdminMessages();
 });
