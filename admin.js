@@ -22,6 +22,7 @@ const $ = id => document.getElementById(id);
 let allCards = [];
 let selectedCard = null;
 let adminMessages = [];
+let messageReads = [];
 
 function clean(v) { return String(v ?? '').trim(); }
 function escapeHtml(v) { return clean(v).replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c])); }
@@ -262,37 +263,91 @@ function adminMessageDate(m) {
 }
 
 async function loadAdminMessages() {
+  const status = $('messageAdminStatus');
+
   try {
-    const snap = await getDocs(collection(db, 'messages'));
-    adminMessages = snap.docs
+    if (status) status.textContent = 'Aggiornamento comunicazioni...';
+
+    const [messageSnap, readSnap] = await Promise.all([
+      getDocs(collection(db, 'messages')),
+      getDocs(collection(db, 'messageReads'))
+    ]);
+
+    adminMessages = messageSnap.docs
       .map(d => ({ id: d.id, ...d.data() }))
       .sort((a,b) => adminMessageDate(b) - adminMessageDate(a));
+
+    messageReads = readSnap.docs.map(d => ({ id: d.id, ...d.data() }));
 
     const list = $('adminMessageList');
     if (!list) return;
 
     if (!adminMessages.length) {
       list.innerHTML = '<p class="muted-line">Nessuna comunicazione pubblicata.</p>';
+      if (status) status.textContent = '';
       return;
     }
 
-    list.innerHTML = adminMessages.map(m => `
-      <article class="admin-message-row">
-        <div>
-          <strong>${escapeHtml(m.title || 'Comunicazione V.I.P.')}</strong>
-          <p>${escapeHtml(m.body || '')}</p>
-          <small>${adminMessageDate(m).toLocaleDateString('it-IT')}</small>
-        </div>
-        <button class="danger compact delete-message" data-id="${escapeHtml(m.id)}" type="button">ELIMINA</button>
-      </article>
-    `).join('');
+    list.innerHTML = adminMessages.map(m => {
+      const receipts = messageReads.filter(r => clean(r.messageId) === clean(m.id));
+      const readCodes = new Set(receipts.map(r => clean(r.cardCode)).filter(Boolean));
+
+      const readCards = allCards.filter(card => readCodes.has(clean(card.cardCode)));
+      const unreadCards = allCards.filter(card => !readCodes.has(clean(card.cardCode)));
+
+      const readRows = readCards.length
+        ? readCards.map(card => {
+            const receipt = receipts.find(r => clean(r.cardCode) === clean(card.cardCode));
+            return `<p class="read-yes">✓ ${escapeHtml(fullName(card) || card.cardCode || 'Cliente')} <span>— ${escapeHtml(formatTimestamp(receipt?.readAt))}</span></p>`;
+          }).join('')
+        : '<p class="read-yes">Nessuna lettura registrata.</p>';
+
+      const unreadRows = unreadCards.length
+        ? unreadCards.map(card => `<p class="read-no">○ ${escapeHtml(fullName(card) || card.cardCode || 'Cliente')}</p>`).join('')
+        : '<p class="read-no">Tutte le tessere hanno aperto la comunicazione.</p>';
+
+      return `
+        <article class="admin-message-row">
+          <div class="admin-message-main">
+            <strong>${escapeHtml(m.title || 'Comunicazione V.I.P.')}</strong>
+            <p>${escapeHtml(m.body || '')}</p>
+            <small>${adminMessageDate(m).toLocaleString('it-IT', { dateStyle:'short', timeStyle:'short' })}</small>
+
+            <div id="reads-${escapeHtml(m.id)}" class="read-details hidden">
+              <h4>Hanno aperto la comunicazione</h4>
+              ${readRows}
+              <h4>Non l'hanno ancora aperta</h4>
+              ${unreadRows}
+            </div>
+          </div>
+
+          <div class="admin-message-actions">
+            <span class="read-stat">LETTE ${readCards.length}/${allCards.length}</span>
+            <button class="secondary compact toggle-read-details" data-id="${escapeHtml(m.id)}" type="button">DETTAGLI LETTURE</button>
+            <button class="danger compact delete-message" data-id="${escapeHtml(m.id)}" type="button">ELIMINA</button>
+          </div>
+        </article>
+      `;
+    }).join('');
+
+    list.querySelectorAll('.toggle-read-details').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const box = document.getElementById(`reads-${btn.dataset.id}`);
+        if (!box) return;
+        const opening = box.classList.contains('hidden');
+        box.classList.toggle('hidden');
+        btn.textContent = opening ? 'CHIUDI DETTAGLI' : 'DETTAGLI LETTURE';
+      });
+    });
 
     list.querySelectorAll('.delete-message').forEach(btn => {
       btn.addEventListener('click', () => deleteMessage(btn.dataset.id));
     });
+
+    if (status) status.textContent = 'Letture aggiornate ✓';
   } catch (err) {
     console.error(err);
-    if ($('messageAdminStatus')) $('messageAdminStatus').textContent = 'Non riesco a leggere le comunicazioni.';
+    if (status) status.textContent = 'Non riesco ad aggiornare le letture delle comunicazioni.';
   }
 }
 
@@ -344,6 +399,7 @@ async function deleteMessage(id) {
 
 $('toggleReview').addEventListener('click', toggleReviewStatus);
 $('publishMessage').addEventListener('click', publishMessage);
+$('refreshMessageReads').addEventListener('click', loadAdminMessages);
 
 $('redeemBirthday').addEventListener('click', redeemBirthdayCoupon);
 $('googleLogin').addEventListener('click', login);
