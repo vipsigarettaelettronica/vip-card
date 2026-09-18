@@ -2319,3 +2319,18 @@ button:active {
     grid-template-columns: 1fr;
   }
 }
+
+
+/* Mini-me Federica nelle comunicazioni */
+.sms-avatar-img {
+  display: block;
+  width: 48px;
+  height: 48px;
+  object-fit: cover;
+  border: 2px solid rgba(224,183,43,.86);
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px rgba(0,0,0,.35), 0 4px 12px rgba(0,0,0,.28);
+}
+.sms-preview {
+  grid-template-columns: 48px 1fr;
+}
