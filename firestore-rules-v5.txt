@@ -31,6 +31,22 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
+    match /messages/{messageId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /pushSubscriptions/{subscriptionId} {
+      allow get: if isAdmin() || (signedIn() && request.auth.uid == subscriptionId);
+      allow create, update: if signedIn() && request.auth.uid == subscriptionId;
+      allow list, delete: if isAdmin();
+    }
+
+    match /consentAcceptances/{acceptanceId} {
+      allow get, create, update: if signedIn();
+      allow list, delete: if isAdmin();
+    }
+
     match /recoveries/{recoveryCode} {
       // Il codice di recupero è una chiave casuale ad alta entropia: chi lo conosce può recuperare
       // soltanto i dati minimi necessari a ricostruire la tessera, non telefono/e-mail/data completa.
