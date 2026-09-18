@@ -2083,3 +2083,226 @@ button:active {
     flex-direction: column;
   }
 }
+
+
+/* =========================================================
+   AREA V.I.P. 6.1 — COMUNICAZIONI STILE SMS
+========================================================= */
+
+.sms-preview {
+  display: grid;
+  grid-template-columns: 42px 1fr;
+  gap: 11px;
+  align-items: start;
+}
+
+.sms-avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  color: #111;
+  background: linear-gradient(145deg, #d4a72b, #f0cf65);
+  border-radius: 50%;
+  font-size: .72rem;
+  font-weight: 900;
+  letter-spacing: .04em;
+}
+
+.sms-preview-copy {
+  min-width: 0;
+}
+
+.sms-preview-copy strong {
+  display: block;
+  color: #fff;
+  font-size: .98rem;
+}
+
+.sms-preview-copy p {
+  display: -webkit-box;
+  margin: 4px 0;
+  overflow: hidden;
+  color: #d8d8dd;
+  font-size: .86rem;
+  line-height: 1.4;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.sms-preview-copy time {
+  color: var(--muted);
+  font-size: .7rem;
+}
+
+.sms-thread {
+  max-height: 420px;
+  margin-top: 14px;
+  padding: 14px 10px 16px;
+  overflow-y: auto;
+  background:
+    radial-gradient(circle at 85% 0%, rgba(211,170,38,.07), transparent 26%),
+    #0b0b0d;
+  border: 1px solid rgba(255,255,255,.07);
+  border-radius: 16px;
+  scroll-behavior: smooth;
+}
+
+.sms-day-separator {
+  display: flex;
+  justify-content: center;
+  margin: 12px 0 10px;
+}
+
+.sms-day-separator span {
+  padding: 5px 9px;
+  color: #c6c6cc;
+  background: #1b1b20;
+  border: 1px solid rgba(255,255,255,.07);
+  border-radius: 999px;
+  font-size: .64rem;
+  font-weight: 700;
+  letter-spacing: .05em;
+}
+
+.sms-row {
+  display: flex;
+  justify-content: flex-start;
+  margin: 7px 0;
+}
+
+.sms-bubble {
+  position: relative;
+  width: min(86%, 520px);
+  padding: 11px 13px 8px;
+  color: #fff;
+  background:
+    linear-gradient(180deg, #242429 0%, #1a1a1e 100%);
+  border: 1px solid rgba(224,183,43,.18);
+  border-radius: 16px 16px 16px 5px;
+  box-shadow: 0 5px 14px rgba(0,0,0,.18);
+}
+
+.sms-bubble::before {
+  content: "";
+  position: absolute;
+  left: -5px;
+  bottom: 0;
+  width: 10px;
+  height: 10px;
+  background: #1a1a1e;
+  clip-path: polygon(100% 0, 100% 100%, 0 100%);
+}
+
+.sms-sender {
+  display: block;
+  margin-bottom: 3px;
+  color: var(--gold2);
+  font-size: .68rem;
+  font-weight: 900;
+  letter-spacing: .08em;
+}
+
+.sms-bubble strong {
+  display: block;
+  color: #fff;
+  font-size: .93rem;
+}
+
+.sms-bubble p {
+  margin: 5px 0 4px;
+  color: #ececf0;
+  font-size: .87rem;
+  line-height: 1.45;
+}
+
+.sms-bubble time {
+  display: block;
+  color: #9f9fa7;
+  text-align: right;
+  font-size: .66rem;
+}
+
+@media (max-width: 560px) {
+  .sms-thread {
+    max-height: 360px;
+  }
+
+  .sms-bubble {
+    width: 91%;
+  }
+}
+
+/* =========================================================
+   ADMIN — STATO LETTURA COMUNICAZIONI
+========================================================= */
+
+.admin-message-row {
+  align-items: flex-start;
+}
+
+.admin-message-main {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.admin-message-actions {
+  display: grid;
+  gap: 8px;
+  flex: 0 0 auto;
+}
+
+.read-stat {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 34px;
+  padding: 7px 10px;
+  color: #f5e3a2;
+  background: #282313;
+  border: 1px solid rgba(224,183,43,.24);
+  border-radius: 10px;
+  font-size: .72rem;
+  font-weight: 800;
+}
+
+.read-details {
+  margin-top: 10px;
+  padding: 11px 12px;
+  background: #0d0d10;
+  border: 1px solid rgba(255,255,255,.07);
+  border-radius: 11px;
+}
+
+.read-details h4 {
+  margin: 0 0 7px;
+  color: #fff;
+  font-size: .82rem;
+}
+
+.read-details p {
+  margin: 4px 0;
+  color: #cfcfd4;
+  font-size: .78rem;
+  line-height: 1.4;
+}
+
+.read-details .read-yes {
+  color: #d8efdc;
+}
+
+.read-details .read-no {
+  color: #e4d7b0;
+}
+
+@media (max-width: 620px) {
+  .admin-message-actions {
+    width: 100%;
+  }
+
+  .read-stat,
+  .admin-message-actions button {
+    width: 100%;
+  }
+}
