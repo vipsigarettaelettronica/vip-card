@@ -8,7 +8,7 @@
   <title>AREA V.I.P. - V.I.P. Card</title>
 
   <link rel="manifest" href="manifest.webmanifest">
-  <link rel="stylesheet" href="styles.css?v=6.0.0">
+  <link rel="stylesheet" href="styles.css?v=6.1.0">
 </head>
 
 <body>
@@ -201,9 +201,9 @@
           <p class="dashboard-copy">Nessuna nuova comunicazione.</p>
         </div>
         <button id="toggleMessages" class="dashboard-button" type="button">
-          VEDI TUTTE
+          APRI MESSAGGI
         </button>
-        <div id="messagesList" class="messages-list hidden"></div>
+        <div id="messagesList" class="messages-list sms-thread hidden" aria-live="polite"></div>
       </section>
 
       <section id="reviewBox" class="vip-dashboard-card review-card">
@@ -330,6 +330,6 @@
     </div>
   </div>
 
-<script type="module" src="app.js?v=6.0.0"></script>
+<script type="module" src="app.js?v=6.1.0"></script>
 </body>
 </html>
