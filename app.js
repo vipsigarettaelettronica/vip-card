@@ -196,55 +196,145 @@ function escapeText(value) {
   }[c]));
 }
 
+function messageDayLabel(date) {
+  const today = new Date();
+  today.setHours(0,0,0,0);
+
+  const target = new Date(date);
+  target.setHours(0,0,0,0);
+
+  const diff = Math.round((today - target) / 86400000);
+  if (diff === 0) return 'OGGI';
+  if (diff === 1) return 'IERI';
+
+  return target.toLocaleDateString('it-IT', {
+    day: 'numeric',
+    month: 'long',
+    year: target.getFullYear() !== today.getFullYear() ? 'numeric' : undefined
+  }).toUpperCase();
+}
+
+function messageTimeLabel(date) {
+  return date.toLocaleTimeString('it-IT', {
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+}
+
+async function markMessagesRead(messages) {
+  if (!currentUser || !currentCard?.cardCode || !currentRecoveryCode || !messages.length) return;
+
+  const safeCardCode = String(currentCard.cardCode).replace(/[^A-Za-z0-9_-]/g, '_');
+
+  try {
+    await Promise.all(messages.map(async m => {
+      const readId = `${m.id}__${safeCardCode}`;
+
+      await setDoc(
+        doc(db, 'messageReads', readId),
+        {
+          messageId: m.id,
+          cardCode: currentCard.cardCode,
+          recoveryCode: currentRecoveryCode,
+          viewerUid: currentUser.uid,
+          firstName: currentCard.firstName || '',
+          lastName: currentCard.lastName || '',
+          readAt: serverTimestamp()
+        },
+        { merge: true }
+      );
+    }));
+  } catch (err) {
+    console.warn('Registrazione lettura comunicazioni non disponibile:', err);
+  }
+}
+
 async function loadMessages() {
   const preview = $('messagePreview');
   const list = $('messagesList');
   const badge = $('messageBadge');
-  if (!preview || !list || !badge) return;
+  const toggle = $('toggleMessages');
+  if (!preview || !list || !badge || !toggle) return;
 
   try {
     const snap = await getDocs(collection(db, 'messages'));
-    const messages = snap.docs
+    const newestFirst = snap.docs
       .map(d => ({ id: d.id, ...d.data() }))
       .filter(m => m.active !== false)
       .sort((a,b) => messageDate(b) - messageDate(a));
 
-    const lastSeenKey = currentCard?.cardCode ? `vipMessagesSeen:${currentCard.cardCode}` : 'vipMessagesSeen';
+    const lastSeenKey = currentCard?.cardCode
+      ? `vipMessagesSeen:${currentCard.cardCode}`
+      : 'vipMessagesSeen';
+
     const lastSeen = Number(localStorage.getItem(lastSeenKey) || 0);
-    const unread = messages.filter(m => messageDate(m).getTime() > lastSeen).length;
+    const unread = newestFirst.filter(m => messageDate(m).getTime() > lastSeen).length;
 
     badge.textContent = String(unread);
     badge.classList.toggle('hidden', unread < 1);
 
-    if (!messages.length) {
+    if (!newestFirst.length) {
       preview.innerHTML = '<p class="dashboard-copy">Nessuna comunicazione al momento.</p>';
       list.innerHTML = '';
+      toggle.classList.add('hidden');
       return;
     }
 
-    const latest = messages[0];
+    toggle.classList.remove('hidden');
+
+    const latest = newestFirst[0];
+    const latestDate = messageDate(latest);
+
     preview.innerHTML = `
-      <article class="message-item latest">
-        <strong>${escapeText(latest.title || 'Comunicazione V.I.P.')}</strong>
-        <p>${escapeText(latest.body || '')}</p>
-        <time>${messageDate(latest).toLocaleDateString('it-IT')}</time>
-      </article>`;
+      <div class="sms-preview">
+        <div class="sms-avatar" aria-hidden="true">VIP</div>
+        <div class="sms-preview-copy">
+          <strong>${escapeText(latest.title || 'Comunicazione V.I.P.')}</strong>
+          <p>${escapeText(latest.body || '')}</p>
+          <time>${messageDayLabel(latestDate)} · ${messageTimeLabel(latestDate)}</time>
+        </div>
+      </div>`;
 
-    list.innerHTML = messages.map(m => `
-      <article class="message-item">
-        <strong>${escapeText(m.title || 'Comunicazione V.I.P.')}</strong>
-        <p>${escapeText(m.body || '')}</p>
-        <time>${messageDate(m).toLocaleDateString('it-IT')}</time>
-      </article>
-    `).join('');
+    const oldestFirst = [...newestFirst].reverse();
+    let currentDay = '';
 
-    $('toggleMessages').onclick = () => {
+    list.innerHTML = oldestFirst.map(m => {
+      const d = messageDate(m);
+      const day = messageDayLabel(d);
+      const separator = day !== currentDay
+        ? `<div class="sms-day-separator"><span>${escapeText(day)}</span></div>`
+        : '';
+
+      currentDay = day;
+
+      return `
+        ${separator}
+        <article class="sms-row">
+          <div class="sms-bubble">
+            <span class="sms-sender">V.I.P.</span>
+            <strong>${escapeText(m.title || 'Comunicazione V.I.P.')}</strong>
+            <p>${escapeText(m.body || '')}</p>
+            <time>${messageTimeLabel(d)}</time>
+          </div>
+        </article>
+      `;
+    }).join('');
+
+    toggle.onclick = async () => {
       const opening = list.classList.contains('hidden');
+
       list.classList.toggle('hidden');
-      $('toggleMessages').textContent = opening ? 'CHIUDI' : 'VEDI TUTTE';
+      toggle.textContent = opening ? 'CHIUDI MESSAGGI' : 'APRI MESSAGGI';
+
       if (opening) {
         localStorage.setItem(lastSeenKey, String(Date.now()));
         badge.classList.add('hidden');
+
+        requestAnimationFrame(() => {
+          list.scrollTop = list.scrollHeight;
+        });
+
+        await markMessagesRead(newestFirst);
       }
     };
   } catch (err) {
