@@ -34,7 +34,7 @@ self.addEventListener('notificationclick', event => {
     clients.openWindow(url)
   );
 });
-const CACHE = 'vip-card-v5-7-push';
+const CACHE = 'vip-card-v6-area-vip';
 const ASSETS = [
   './', './index.html', './styles.css', './app.js', './manifest.webmanifest', './privacy.html',
   './assets/logo-vip.png', './assets/icon-192.png', './assets/icon-512.png',
