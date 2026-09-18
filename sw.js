@@ -34,10 +34,10 @@ self.addEventListener('notificationclick', event => {
     clients.openWindow(url)
   );
 });
-const CACHE = 'vip-card-v6-1-2-avatar-fix';
+const CACHE = 'vip-card-v6-1-3-avatar-final';
 const ASSETS = [
   './', './index.html', './styles.css', './app.js', './manifest.webmanifest', './privacy.html',
-  './assets/logo-vip.png', './assets/icon-192.png', './assets/icon-512.png', './assets/federica-avatar.png?v=2',
+  './assets/logo-vip.png', './assets/icon-192.png', './assets/icon-512.png', './assets/federica-avatar.webp?v=3',
   './admin.html', './admin.js'
 ];
 self.addEventListener('install', event => {
