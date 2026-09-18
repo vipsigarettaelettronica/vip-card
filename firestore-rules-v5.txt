@@ -44,6 +44,7 @@ service cloud.firestore {
         && request.resource.data.messageId is string
         && request.resource.data.cardCode is string
         && request.resource.data.recoveryCode is string
+        && readId == request.resource.data.messageId + '__' + request.resource.data.cardCode
         && get(
           /databases/$(database)/documents/recoveries/$(request.resource.data.recoveryCode)
         ).data.cardCode == request.resource.data.cardCode;
