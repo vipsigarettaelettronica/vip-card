@@ -2306,3 +2306,16 @@ button:active {
     width: 100%;
   }
 }
+
+
+.admin-message-buttons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+@media (max-width: 560px) {
+  .admin-message-buttons {
+    grid-template-columns: 1fr;
+  }
+}
