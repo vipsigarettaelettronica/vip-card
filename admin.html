@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#222222">
   <meta name="robots" content="noindex,nofollow">
   <title>Gestione V.I.P. Card</title>
-  <link rel="stylesheet" href="styles.css?v=6.0.0">
+  <link rel="stylesheet" href="styles.css?v=6.1.0">
 </head>
 <body>
   <main class="admin-shell">
@@ -60,7 +60,10 @@
           <label>Messaggio
             <textarea id="messageBody" maxlength="500" rows="4" placeholder="Scrivi la comunicazione che resterà consultabile nell'app."></textarea>
           </label>
-          <button id="publishMessage" class="primary" type="button">PUBBLICA COMUNICAZIONE</button>
+          <div class="admin-message-buttons">
+            <button id="publishMessage" class="primary" type="button">PUBBLICA COMUNICAZIONE</button>
+            <button id="refreshMessageReads" class="secondary" type="button">AGGIORNA LETTURE</button>
+          </div>
           <p id="messageAdminStatus" class="muted-line"></p>
         </div>
         <div id="adminMessageList" class="admin-message-list"></div>
@@ -100,6 +103,6 @@
     </div>
   </div>
 
-  <script type="module" src="admin.js?v=6.0.0"></script>
+  <script type="module" src="admin.js?v=6.1.0"></script>
 </body>
 </html>
