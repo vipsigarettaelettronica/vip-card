@@ -1760,3 +1760,270 @@ button:active {
 
   text-align: center;
 }
+
+
+/* =========================================================
+   AREA V.I.P. V6 — DASHBOARD CLIENTE
+========================================================= */
+
+.vip-dashboard-card {
+  margin: 14px 0;
+  padding: 18px;
+  background:
+    linear-gradient(180deg, rgba(30,30,34,.98), rgba(15,15,18,.99));
+  border: 1px solid rgba(224,183,43,.34);
+  border-radius: 18px;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.025);
+}
+
+.dashboard-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.dashboard-heading h2 {
+  margin: 3px 0 0;
+  font-size: 1.12rem;
+}
+
+.dashboard-kicker {
+  color: var(--gold2);
+  font-size: .68rem;
+  font-weight: 800;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+
+.dashboard-icon {
+  font-size: 1.55rem;
+  line-height: 1;
+}
+
+.dashboard-copy {
+  margin: 10px 0 0;
+  color: #dedee3;
+  font-size: .9rem;
+  line-height: 1.45;
+}
+
+.birthday-countdown {
+  margin-top: 14px;
+  color: #fff;
+  font-size: 1.06rem;
+  font-weight: 800;
+}
+
+.birthday-progress {
+  width: 100%;
+  height: 7px;
+  margin-top: 10px;
+  overflow: hidden;
+  background: #0a0a0c;
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 999px;
+}
+
+.birthday-progress span {
+  display: block;
+  width: 0;
+  height: 100%;
+  background: linear-gradient(90deg, #c89a1e, #f0cf65);
+  border-radius: inherit;
+  transition: width .35s ease;
+}
+
+.birthday-dashboard.used {
+  opacity: .82;
+}
+
+.message-badge,
+.review-check {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 28px;
+  height: 28px;
+  padding: 0 8px;
+  color: #111;
+  background: var(--gold2);
+  border-radius: 999px;
+  font-size: .78rem;
+  font-weight: 900;
+}
+
+.message-preview {
+  margin-top: 12px;
+}
+
+.message-item {
+  padding: 13px 0;
+  border-top: 1px solid rgba(255,255,255,.08);
+}
+
+.message-item:first-child {
+  border-top: 0;
+}
+
+.message-item strong {
+  display: block;
+  color: #fff;
+  font-size: .95rem;
+}
+
+.message-item p {
+  margin: 6px 0;
+  color: #d8d8dd;
+  font-size: .88rem;
+  line-height: 1.45;
+}
+
+.message-item time {
+  color: var(--muted);
+  font-size: .74rem;
+}
+
+.message-item.latest {
+  padding: 0;
+}
+
+.messages-list {
+  margin-top: 10px;
+}
+
+.dashboard-button,
+.dashboard-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 42px;
+  margin-top: 14px;
+  padding: 10px 14px;
+  color: #fff;
+  background: #29292f;
+  border: 1px solid rgba(255,255,255,.10);
+  border-radius: 12px;
+  text-decoration: none;
+  font-size: .78rem;
+  font-weight: 800;
+  letter-spacing: .05em;
+}
+
+.useful-links-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.useful-links-grid a {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  padding: 10px;
+  color: #fff;
+  background: #111114;
+  border: 1px solid rgba(224,183,43,.28);
+  border-radius: 13px;
+  text-align: center;
+  text-decoration: none;
+  font-size: .78rem;
+  font-weight: 800;
+}
+
+.notification-compact {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 16px 0 4px;
+  padding: 12px 14px;
+  background: rgba(255,255,255,.035);
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 14px;
+}
+
+.notification-toggle {
+  flex: 0 0 auto;
+  min-height: auto !important;
+  padding: 8px 10px;
+  color: #fff;
+  background: #2b2b30;
+  border: 1px solid rgba(255,255,255,.10);
+  border-radius: 10px;
+  font-size: .72rem;
+  font-weight: 800;
+}
+
+.notification-compact .notification-note {
+  margin: 0;
+  color: #c8c8ce;
+  text-align: right;
+  text-transform: none;
+  font-size: .72rem;
+  line-height: 1.35;
+}
+
+.card-tools {
+  margin-top: 12px;
+  padding: 12px 14px;
+  background: #0d0d10;
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 14px;
+}
+
+.card-tools summary {
+  color: #d8d8dd;
+  cursor: pointer;
+  font-size: .82rem;
+  font-weight: 700;
+}
+
+.card-tools-intro {
+  margin: 12px 0 10px;
+  color: var(--muted);
+  font-size: .78rem;
+  line-height: 1.4;
+}
+
+.card-tools code {
+  display: block;
+  padding: 12px;
+  color: #fff;
+  background: #060607;
+  border: 1px solid rgba(255,255,255,.09);
+  border-radius: 10px;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+
+.card-tools #copyRecovery {
+  width: 100%;
+  min-height: 42px;
+  margin-top: 10px;
+}
+
+@media (max-width: 560px) {
+  .vip-dashboard-card {
+    padding: 15px;
+  }
+
+  .useful-links-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .notification-compact {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .notification-compact .notification-note {
+    text-align: left;
+  }
+
+  .notification-toggle {
+    width: 100%;
+  }
+}
