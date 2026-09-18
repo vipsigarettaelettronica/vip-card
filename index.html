@@ -5,10 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#222222">
   <meta name="description" content="V.I.P. Card digitale - Vape Is Possible">
-  <title>V.I.P. Card</title>
+  <title>AREA V.I.P. - V.I.P. Card</title>
 
   <link rel="manifest" href="manifest.webmanifest">
-  <link rel="stylesheet" href="styles.css?v=5.8.1">
+  <link rel="stylesheet" href="styles.css?v=6.0.0">
 </head>
 
 <body>
@@ -146,10 +146,8 @@
 
     <section id="cardView" class="panel vip-card-view hidden" aria-live="polite">
       <div class="vip-card-heading">
-        <p class="eyebrow">V.I.P. CARD</p>
-        <p class="wallet-note">Salva la tua V.I.P. Card nel Wallet del telefono.</p>
-
-        <!-- Mantenuto perché app.js aggiorna questo elemento. Visivamente verrà nascosto dal CSS. -->
+        <p class="eyebrow">AREA V.I.P.</p>
+        <p class="wallet-note">La tua tessera e i servizi V.I.P. sempre a portata di mano.</p>
         <h1 id="welcomeName" class="sr-only">Ciao</h1>
       </div>
 
@@ -176,67 +174,100 @@
         </a>
       </div>
 
-      <div class="actions">
-        <!-- Deve restare nel DOM perché app.js usa questo ID; il CSS lo terrà nascosto. -->
-        <button
-          id="fullscreenBarcode"
-          class="primary hidden"
-          type="button"
-          aria-hidden="true"
-          tabindex="-1"
-        >
-          MOSTRA BARCODE GRANDE
-        </button>
-
-        <button id="copyCode" class="secondary" type="button">
-          COPIA CODICE TESSERA
-        </button>
-      </div>
-
-      <div id="birthdayBox" class="birthday-box hidden">
-        <div class="birthday-copy">
-          <strong id="birthdayTitle">BUON COMPLEANNO! -15%</strong>
-          <span id="birthdayText"></span>
+      <section id="birthdayBox" class="vip-dashboard-card birthday-dashboard">
+        <div class="dashboard-heading">
+          <div>
+            <span class="dashboard-kicker">VANTAGGIO V.I.P.</span>
+            <h2 id="birthdayTitle">Coupon compleanno</h2>
+          </div>
+          <span class="dashboard-icon" aria-hidden="true">🎂</span>
         </div>
-
-        <div class="birthday-gift" aria-hidden="true">
-          <svg viewBox="0 0 64 64" role="img" focusable="false">
-            <circle cx="32" cy="32" r="30"></circle>
-            <path d="M16 28h32v24H16z"></path>
-            <path d="M12 22h40v10H12z"></path>
-            <path d="M32 22v30"></path>
-            <path d="M32 22c-7 0-12-3-12-8 0-3 2-6 6-6 5 0 6 6 6 14Z"></path>
-            <path d="M32 22c7 0 12-3 12-8 0-3-2-6-6-6-5 0-6 6-6 14Z"></path>
-          </svg>
+        <p id="birthdayText" class="dashboard-copy"></p>
+        <div id="birthdayCountdown" class="birthday-countdown"></div>
+        <div class="birthday-progress" aria-hidden="true">
+          <span id="birthdayProgress"></span>
         </div>
-      </div>
+      </section>
 
-      <div class="recovery-box">
-        <div class="recovery-copy">
-          <strong>Codice recupero tessera</strong>
-          <p>Conservalo: ti permette di recuperare la card su un altro telefono.</p>
+      <section class="vip-dashboard-card communications-card">
+        <div class="dashboard-heading">
+          <div>
+            <span class="dashboard-kicker">AREA V.I.P.</span>
+            <h2>Comunicazioni</h2>
+          </div>
+          <span id="messageBadge" class="message-badge hidden">0</span>
         </div>
-
-        <code id="recoveryCode">—</code>
-
-        <button id="copyRecovery" class="secondary" type="button">
-          COPIA CODICE RECUPERO
+        <div id="messagePreview" class="message-preview">
+          <p class="dashboard-copy">Nessuna nuova comunicazione.</p>
+        </div>
+        <button id="toggleMessages" class="dashboard-button" type="button">
+          VEDI TUTTE
         </button>
-      </div>
+        <div id="messagesList" class="messages-list hidden"></div>
+      </section>
 
-      <div class="notification-box">
-        <button id="enableNotifications" class="secondary" type="button">
+      <section id="reviewBox" class="vip-dashboard-card review-card">
+        <div class="dashboard-heading">
+          <div>
+            <span class="dashboard-kicker">LA TUA ESPERIENZA</span>
+            <h2>Recensione Google</h2>
+          </div>
+          <span id="reviewCheck" class="review-check hidden" aria-hidden="true">✓</span>
+        </div>
+        <p id="reviewStatus" class="dashboard-copy">
+          Se ti va, racconta la tua esperienza con V.I.P.
+        </p>
+        <a
+          id="reviewLink"
+          class="dashboard-link"
+          href="https://g.page/r/Cex-KplkNcPPEBE/review"
+          target="_blank"
+          rel="noopener"
+        >LASCIA UNA RECENSIONE</a>
+      </section>
+
+      <section class="vip-dashboard-card useful-links-card">
+        <div class="dashboard-heading">
+          <div>
+            <span class="dashboard-kicker">LINK UTILI</span>
+            <h2>V.I.P. online</h2>
+          </div>
+        </div>
+        <div class="useful-links-grid">
+          <a href="https://www.vipsigarettaelettronica.it/" target="_blank" rel="noopener">SITO V.I.P.</a>
+          <a href="https://g.page/r/Cex-KplkNcPPEBE/review" target="_blank" rel="noopener">RECENSIONE GOOGLE</a>
+        </div>
+      </section>
+
+      <div class="notification-compact">
+        <button id="enableNotifications" class="notification-toggle" type="button">
           ATTIVA AVVISI V.I.P.
         </button>
-
         <p id="notificationStatus" class="notification-note">
-          RICEVI AVVISI SU ORARI SPECIALI, EVENTI E V.I.P. BIRTHDAY.
+          Ricevi avvisi su orari speciali, chiusure e comunicazioni utili.
         </p>
       </div>
 
-      <p id="syncStatus" class="notice ok">
-        Tessera collegata al database V.I.P.
-      </p>
+      <details class="card-tools">
+        <summary>Gestione tessera</summary>
+        <p class="card-tools-intro">
+          Qui trovi il codice necessario per recuperare la tessera se cambi telefono.
+        </p>
+        <code id="recoveryCode">—</code>
+        <button id="copyRecovery" class="secondary compact" type="button">
+          COPIA CODICE RECUPERO
+        </button>
+      </details>
+
+      <button
+        id="fullscreenBarcode"
+        class="primary hidden"
+        type="button"
+        aria-hidden="true"
+        tabindex="-1"
+      >MOSTRA BARCODE GRANDE</button>
+
+      <p id="syncStatus" class="sr-only"></p>
     </section>
 <div class="legal-links">
   <a href="privacy.html" target="_blank" rel="noopener">Informativa Privacy</a>
@@ -299,6 +330,6 @@
     </div>
   </div>
 
-<script type="module" src="app.js?v=5.7.4"></script>
+<script type="module" src="app.js?v=6.0.0"></script>
 </body>
 </html>
