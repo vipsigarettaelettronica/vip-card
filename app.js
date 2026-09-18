@@ -1,6 +1,6 @@
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
 import { getAuth, onAuthStateChanged, signInAnonymously } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
-import { getFirestore, doc, getDoc, setDoc, updateDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+import { getFirestore, collection, doc, getDoc, getDocs, setDoc, updateDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 import { getMessaging, getToken, isSupported } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging.js';
 const firebaseConfig = {
   apiKey: 'AIzaSyD-q497X-cHUezvOBL_TKc3L8sHmNQOLDs',
@@ -109,6 +109,148 @@ function birthdayCouponStatus(data) {
 }
 function formatShortDate(date) {
   return date.toLocaleDateString('it-IT', { day: 'numeric', month: 'long' });
+}
+
+function nextBirthdayInfo(data) {
+  const md = data.birthMonthDay || birthMonthDay(data.birthDate);
+  if (!md) return null;
+  const [m, d] = md.split('-').map(Number);
+  if (!m || !d) return null;
+
+  const today = new Date();
+  today.setHours(0,0,0,0);
+
+  let next = new Date(today.getFullYear(), m - 1, d);
+  next.setHours(0,0,0,0);
+  if (next < today) next = new Date(today.getFullYear() + 1, m - 1, d);
+
+  const days = Math.round((next - today) / 86400000);
+  const yearStart = new Date(next.getFullYear() - 1, m - 1, d);
+  const span = Math.max(1, Math.round((next - yearStart) / 86400000));
+  const elapsed = Math.max(0, span - days);
+  const progress = Math.max(0, Math.min(100, Math.round((elapsed / span) * 100)));
+
+  return { days, next, progress };
+}
+
+function renderBirthdayDashboard(data) {
+  const box = $('birthdayBox');
+  if (!box) return;
+
+  const coupon = birthdayCouponStatus(data);
+  const info = nextBirthdayInfo(data);
+  box.classList.remove('used');
+
+  if (coupon.active) {
+    $('birthdayTitle').textContent = coupon.used ? 'Coupon compleanno utilizzato ✓' : 'Il tuo -15% è disponibile!';
+    $('birthdayText').textContent = coupon.used
+      ? 'Hai già utilizzato il V.I.P. Birthday di quest’anno.'
+      : `Valido fino al ${formatShortDate(coupon.end)} e utilizzabile una volta in negozio.`;
+    $('birthdayCountdown').textContent = coupon.used ? 'Ci rivediamo al prossimo compleanno.' : 'BUON COMPLEANNO!';
+    $('birthdayProgress').style.width = '100%';
+    box.classList.toggle('used', coupon.used);
+    return;
+  }
+
+  if (!info) {
+    $('birthdayTitle').textContent = 'Coupon compleanno';
+    $('birthdayText').textContent = 'Il countdown sarà disponibile quando la data di nascita sarà associata alla tessera.';
+    $('birthdayCountdown').textContent = '';
+    $('birthdayProgress').style.width = '0%';
+    return;
+  }
+
+  $('birthdayTitle').textContent = 'Coupon compleanno';
+  $('birthdayText').textContent = info.days === 0
+    ? 'Il tuo V.I.P. Birthday è arrivato.'
+    : `Il tuo coupon -15% si attiva il giorno del compleanno.`;
+  $('birthdayCountdown').textContent = info.days === 1 ? 'Manca 1 giorno' : `Mancano ${info.days} giorni`;
+  $('birthdayProgress').style.width = `${info.progress}%`;
+}
+
+function renderReviewStatus(data) {
+  const done = data.reviewDone === true;
+  $('reviewCheck')?.classList.toggle('hidden', !done);
+  if ($('reviewStatus')) {
+    $('reviewStatus').textContent = done
+      ? 'Recensione effettuata ✓ Grazie per il tuo feedback.'
+      : 'Se ti va, racconta la tua esperienza con V.I.P.';
+  }
+  if ($('reviewLink')) {
+    $('reviewLink').classList.toggle('hidden', done);
+  }
+}
+
+function messageDate(data) {
+  try {
+    if (data.publishedAt?.toDate) return data.publishedAt.toDate();
+    if (data.createdAt?.toDate) return data.createdAt.toDate();
+    if (data.date) return new Date(data.date);
+  } catch {}
+  return new Date(0);
+}
+
+function escapeText(value) {
+  return String(value ?? '').replace(/[&<>"']/g, c => ({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+  }[c]));
+}
+
+async function loadMessages() {
+  const preview = $('messagePreview');
+  const list = $('messagesList');
+  const badge = $('messageBadge');
+  if (!preview || !list || !badge) return;
+
+  try {
+    const snap = await getDocs(collection(db, 'messages'));
+    const messages = snap.docs
+      .map(d => ({ id: d.id, ...d.data() }))
+      .filter(m => m.active !== false)
+      .sort((a,b) => messageDate(b) - messageDate(a));
+
+    const lastSeenKey = currentCard?.cardCode ? `vipMessagesSeen:${currentCard.cardCode}` : 'vipMessagesSeen';
+    const lastSeen = Number(localStorage.getItem(lastSeenKey) || 0);
+    const unread = messages.filter(m => messageDate(m).getTime() > lastSeen).length;
+
+    badge.textContent = String(unread);
+    badge.classList.toggle('hidden', unread < 1);
+
+    if (!messages.length) {
+      preview.innerHTML = '<p class="dashboard-copy">Nessuna comunicazione al momento.</p>';
+      list.innerHTML = '';
+      return;
+    }
+
+    const latest = messages[0];
+    preview.innerHTML = `
+      <article class="message-item latest">
+        <strong>${escapeText(latest.title || 'Comunicazione V.I.P.')}</strong>
+        <p>${escapeText(latest.body || '')}</p>
+        <time>${messageDate(latest).toLocaleDateString('it-IT')}</time>
+      </article>`;
+
+    list.innerHTML = messages.map(m => `
+      <article class="message-item">
+        <strong>${escapeText(m.title || 'Comunicazione V.I.P.')}</strong>
+        <p>${escapeText(m.body || '')}</p>
+        <time>${messageDate(m).toLocaleDateString('it-IT')}</time>
+      </article>
+    `).join('');
+
+    $('toggleMessages').onclick = () => {
+      const opening = list.classList.contains('hidden');
+      list.classList.toggle('hidden');
+      $('toggleMessages').textContent = opening ? 'CHIUDI' : 'VEDI TUTTE';
+      if (opening) {
+        localStorage.setItem(lastSeenKey, String(Date.now()));
+        badge.classList.add('hidden');
+      }
+    };
+  } catch (err) {
+    console.warn('Comunicazioni non disponibili:', err);
+    preview.innerHTML = '<p class="dashboard-copy">Le comunicazioni non sono disponibili in questo momento.</p>';
+  }
 }
 
 function showRegistration() {
@@ -243,16 +385,9 @@ walletBtn.onclick = async e => {
 };
   drawBarcode($('barcode'), data.cardCode, false);
   drawBarcode($('barcodeLarge'), data.cardCode, true);
-  const coupon = birthdayCouponStatus(data);
-  const box = $('birthdayBox');
-  box.classList.toggle('hidden', !coupon.active);
-  if (coupon.active) {
-    $('birthdayTitle').textContent = coupon.used ? 'V.I.P. BIRTHDAY GIÀ UTILIZZATO' : 'BUON COMPLEANNO! -15%';
-    $('birthdayText').textContent = coupon.used
-      ? 'Il coupon compleanno di quest’anno risulta già utilizzato.'
-      : `Il tuo V.I.P. Birthday è attivo fino al ${formatShortDate(coupon.end)}. Utilizzabile una volta in negozio. Esclusi i prodotti soggetti a monopolio e gli articoli non promozionabili.`;
-    box.classList.toggle('used', coupon.used);
-  }
+  renderBirthdayDashboard(data);
+  renderReviewStatus(data);
+  await loadMessages();
   $('syncStatus').textContent = recovered ? 'Tessera recuperata su questo dispositivo.' : 'Tessera collegata al database V.I.P.';
 }
 
@@ -275,6 +410,8 @@ async function createRecoveryRecord(user, data, code) {
     lastName: data.lastName,
     birthMonthDay: birthMonthDay(data.birthDate),
     birthdayCouponUsedYear: data.birthdayCouponUsedYear || null,
+    reviewDone: data.reviewDone === true,
+    reviewDoneAt: data.reviewDoneAt || null,
     privacyConsent: data.privacyConsent === true,
 privacyVersion: data.privacyVersion || null,
 regulationConsent: data.regulationConsent === true,
@@ -484,11 +621,6 @@ $('recoveryForm').addEventListener('submit', async e => {
 $('fullscreenBarcode').addEventListener('click', () => $('barcodeModal').classList.remove('hidden'));
 $('closeModal').addEventListener('click', () => $('barcodeModal').classList.add('hidden'));
 $('barcodeModal').addEventListener('click', e => { if (e.target === $('barcodeModal')) $('barcodeModal').classList.add('hidden'); });
-$('copyCode').addEventListener('click', async () => {
-  const code = $('cardCode').textContent;
-  try { await navigator.clipboard.writeText(code); $('copyCode').textContent = 'CODICE COPIATO ✓'; setTimeout(() => $('copyCode').textContent = 'COPIA CODICE TESSERA', 1700); }
-  catch { alert('Codice tessera: ' + code); }
-});
 $('copyRecovery').addEventListener('click', async () => {
   if (!currentRecoveryCode) return;
   try { await navigator.clipboard.writeText(currentRecoveryCode); $('copyRecovery').textContent = 'CODICE COPIATO ✓'; setTimeout(() => $('copyRecovery').textContent = 'COPIA CODICE RECUPERO', 1700); }
