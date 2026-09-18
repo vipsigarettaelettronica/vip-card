@@ -287,7 +287,7 @@ async function loadMessages() {
 
     preview.innerHTML = `
       <div class="sms-preview">
-        <div class="sms-avatar" aria-hidden="true">VIP</div>
+        <img class="sms-avatar-img" src="./assets/federica-avatar.png" alt="Federica V.I.P.">
         <div class="sms-preview-copy">
           <strong>${escapeText(latest.title || 'Comunicazione V.I.P.')}</strong>
           <p>${escapeText(latest.body || '')}</p>
