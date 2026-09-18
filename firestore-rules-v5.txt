@@ -36,6 +36,19 @@ service cloud.firestore {
       allow create, update, delete: if isAdmin();
     }
 
+    match /messageReads/{readId} {
+      allow get, list, delete: if isAdmin();
+
+      allow create, update: if signedIn()
+        && request.resource.data.viewerUid == request.auth.uid
+        && request.resource.data.messageId is string
+        && request.resource.data.cardCode is string
+        && request.resource.data.recoveryCode is string
+        && get(
+          /databases/$(database)/documents/recoveries/$(request.resource.data.recoveryCode)
+        ).data.cardCode == request.resource.data.cardCode;
+    }
+
     match /pushSubscriptions/{subscriptionId} {
       allow get: if isAdmin() || (signedIn() && request.auth.uid == subscriptionId);
       allow create, update: if signedIn() && request.auth.uid == subscriptionId;
