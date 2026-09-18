@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#222222">
   <meta name="robots" content="noindex,nofollow">
   <title>Gestione V.I.P. Card</title>
-  <link rel="stylesheet" href="styles.css?v=5.2.0">
+  <link rel="stylesheet" href="styles.css?v=6.0.0">
 </head>
 <body>
   <main class="admin-shell">
@@ -50,6 +50,22 @@
         <p id="resultCount" class="muted-line"></p>
       </section>
 
+      <section class="panel admin-messages">
+        <p class="eyebrow">COMUNICAZIONI AREA V.I.P.</p>
+        <h2>Pubblica un messaggio</h2>
+        <div class="admin-message-form">
+          <label>Titolo
+            <input id="messageTitle" type="text" maxlength="80" placeholder="Es. Chiusura straordinaria">
+          </label>
+          <label>Messaggio
+            <textarea id="messageBody" maxlength="500" rows="4" placeholder="Scrivi la comunicazione che resterà consultabile nell'app."></textarea>
+          </label>
+          <button id="publishMessage" class="primary" type="button">PUBBLICA COMUNICAZIONE</button>
+          <p id="messageAdminStatus" class="muted-line"></p>
+        </div>
+        <div id="adminMessageList" class="admin-message-list"></div>
+      </section>
+
       <section id="customerList" class="customer-list" aria-live="polite"></section>
       <p id="adminError" class="error admin-error" aria-live="assertive"></p>
     </section>
@@ -71,17 +87,19 @@
         <div><dt>Danea</dt><dd id="detailDanea"></dd></div>
         <div><dt>Recupero tessera</dt><dd id="detailRecovery"></dd></div>
         <div><dt>V.I.P. Birthday</dt><dd id="detailBirthdayCoupon"></dd></div>
+        <div><dt>Recensione Google</dt><dd id="detailReview"></dd></div>
       </dl>
       <div class="admin-modal-actions">
         <button id="copyDetailCode" class="secondary" type="button">COPIA CODICE TESSERA</button>
         <button id="toggleDanea" class="primary" type="button"></button>
         <button id="resetRecovery" class="secondary" type="button">NUOVO CODICE RECUPERO</button>
         <button id="redeemBirthday" class="primary hidden" type="button">UTILIZZA COUPON -15%</button>
+        <button id="toggleReview" class="secondary" type="button"></button>
       </div>
       <p class="danea-note">I punti fedeltà restano gestiti in Danea. Questa area serve a gestire la tessera digitale e l'associazione del codice cliente.</p>
     </div>
   </div>
 
-  <script type="module" src="admin.js?v=5.2.0"></script>
+  <script type="module" src="admin.js?v=6.0.0"></script>
 </body>
 </html>
