@@ -379,60 +379,83 @@ try {
 } catch (err) {
   console.error('Controllo stato notifiche:', err);
 }
-  let consentIsCurrent =
-  data.privacyConsent === true &&
-  data.privacyVersion === CURRENT_PRIVACY_VERSION &&
-  data.regulationConsent === true &&
-  data.regulationVersion === CURRENT_REGULATION_VERSION;
+  let privacyIsCurrent =
+    data.privacyConsent === true &&
+    data.privacyVersion === CURRENT_PRIVACY_VERSION;
 
-if (!consentIsCurrent && data.cardCode) {
-  try {
-    const localConsent = JSON.parse(
-      localStorage.getItem(`vipConsent:${data.cardCode}`) || 'null'
-    );
+  let regulationIsCurrent =
+    data.regulationConsent === true &&
+    data.regulationVersion === CURRENT_REGULATION_VERSION;
 
-    consentIsCurrent =
-      localConsent?.privacyVersion === CURRENT_PRIVACY_VERSION &&
-      localConsent?.regulationVersion === CURRENT_REGULATION_VERSION;
-  } catch {}
-}
+  if (data.cardCode) {
+    try {
+      const localConsent = JSON.parse(
+        localStorage.getItem(`vipConsent:${data.cardCode}`) || 'null'
+      );
 
-if (!consentIsCurrent && currentRecoveryCode) {
-  try {
-    const consentSnap = await getDoc(
-      doc(db, 'consentAcceptances', currentRecoveryCode)
-    );
+      privacyIsCurrent =
+        privacyIsCurrent ||
+        localConsent?.privacyVersion === CURRENT_PRIVACY_VERSION;
 
-    if (consentSnap.exists()) {
-      const consent = consentSnap.data();
-
-      consentIsCurrent =
-        consent.privacyConsent === true &&
-        consent.privacyVersion === CURRENT_PRIVACY_VERSION &&
-        consent.regulationConsent === true &&
-        consent.regulationVersion === CURRENT_REGULATION_VERSION;
-
-      if (consentIsCurrent) {
-        currentCard.privacyConsent = true;
-        currentCard.privacyVersion = CURRENT_PRIVACY_VERSION;
-        currentCard.regulationConsent = true;
-        currentCard.regulationVersion = CURRENT_REGULATION_VERSION;
-
-        localStorage.setItem(
-          `vipConsent:${data.cardCode}`,
-          JSON.stringify({
-            privacyVersion: CURRENT_PRIVACY_VERSION,
-            regulationVersion: CURRENT_REGULATION_VERSION
-          })
-        );
-      }
-    }
-  } catch (err) {
-    console.warn('Controllo consensi non disponibile:', err);
+      regulationIsCurrent =
+        regulationIsCurrent ||
+        localConsent?.regulationVersion === CURRENT_REGULATION_VERSION;
+    } catch {}
   }
-}
 
-$('consentUpdateModal').classList.toggle('hidden', consentIsCurrent);
+  if ((!privacyIsCurrent || !regulationIsCurrent) && currentRecoveryCode) {
+    try {
+      const consentSnap = await getDoc(
+        doc(db, 'consentAcceptances', currentRecoveryCode)
+      );
+
+      if (consentSnap.exists()) {
+        const consent = consentSnap.data();
+
+        privacyIsCurrent =
+          privacyIsCurrent ||
+          (
+            consent.privacyConsent === true &&
+            consent.privacyVersion === CURRENT_PRIVACY_VERSION
+          );
+
+        regulationIsCurrent =
+          regulationIsCurrent ||
+          (
+            consent.regulationConsent === true &&
+            consent.regulationVersion === CURRENT_REGULATION_VERSION
+          );
+      }
+    } catch (err) {
+      console.warn('Controllo consensi non disponibile:', err);
+    }
+  }
+
+  const consentIsCurrent = privacyIsCurrent && regulationIsCurrent;
+  const privacyRow = $('privacyUpdateRow');
+  const regulationRow = $('regulationUpdateRow');
+  const consentIntro = $('consentUpdateIntro');
+
+  privacyRow?.classList.toggle('hidden', privacyIsCurrent);
+  regulationRow?.classList.toggle('hidden', regulationIsCurrent);
+
+  if ($('updatePrivacyConsent')) $('updatePrivacyConsent').checked = false;
+  if ($('updateRegulationConsent')) $('updateRegulationConsent').checked = false;
+
+  if (consentIntro) {
+    if (!privacyIsCurrent && !regulationIsCurrent) {
+      consentIntro.textContent =
+        'Per continuare a utilizzare la tua V.I.P. Card è necessario confermare i documenti aggiornati.';
+    } else if (!regulationIsCurrent) {
+      consentIntro.textContent =
+        'Abbiamo aggiornato il Regolamento V.I.P. Card. Leggilo e conferma per continuare.';
+    } else if (!privacyIsCurrent) {
+      consentIntro.textContent =
+        'Abbiamo aggiornato l’Informativa Privacy. Leggila e conferma per continuare.';
+    }
+  }
+
+  $('consentUpdateModal').classList.toggle('hidden', consentIsCurrent);
   registrationView.classList.add('hidden');
   recoveryView.classList.add('hidden');
   cardView.classList.remove('hidden');
@@ -577,12 +600,20 @@ $('confirmConsentUpdate').addEventListener('click', async () => {
 
   error.textContent = '';
 
-  if (
-    !$('updatePrivacyConsent').checked ||
-    !$('updateRegulationConsent').checked
-  ) {
+  const privacyNeedsUpdate =
+    !$('privacyUpdateRow')?.classList.contains('hidden');
+  const regulationNeedsUpdate =
+    !$('regulationUpdateRow')?.classList.contains('hidden');
+
+  if (privacyNeedsUpdate && !$('updatePrivacyConsent').checked) {
     error.textContent =
-      'Devi confermare Privacy e Regolamento per continuare.';
+      'Devi confermare la presa visione dell’Informativa Privacy.';
+    return;
+  }
+
+  if (regulationNeedsUpdate && !$('updateRegulationConsent').checked) {
+    error.textContent =
+      'Devi leggere e accettare il Regolamento V.I.P. Card aggiornato.';
     return;
   }
 
