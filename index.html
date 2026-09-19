@@ -8,7 +8,7 @@
   <title>AREA V.I.P. - V.I.P. Card</title>
 
   <link rel="manifest" href="manifest.webmanifest">
-  <link rel="stylesheet" href="styles.css?v=6.2.0">
+  <link rel="stylesheet" href="styles.css?v=6.2.1">
 </head>
 
 <body>
@@ -294,12 +294,12 @@
   <div class="modal-content consent-update-content">
     <h2 id="consentUpdateTitle">Aggiornamento V.I.P. Card</h2>
 
-    <p>
+    <p id="consentUpdateIntro">
       Per continuare a utilizzare la tua V.I.P. Card è necessario
-      confermare la presa visione dei documenti aggiornati.
+      confermare i documenti aggiornati.
     </p>
 
-    <label class="check-row">
+    <label id="privacyUpdateRow" class="check-row">
       <input id="updatePrivacyConsent" type="checkbox">
       <span>
         Dichiaro di aver preso visione dell’
@@ -307,7 +307,7 @@
       </span>
     </label>
 
-    <label class="check-row">
+    <label id="regulationUpdateRow" class="check-row">
       <input id="updateRegulationConsent" type="checkbox">
       <span>
         Ho letto e accetto il
@@ -339,6 +339,6 @@
     </div>
   </div>
 
-<script type="module" src="app.js?v=6.2.0"></script>
+<script type="module" src="app.js?v=6.2.1"></script>
 </body>
 </html>
