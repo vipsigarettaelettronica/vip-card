@@ -2334,3 +2334,45 @@ button:active {
 .sms-preview {
   grid-template-columns: 48px 1fr;
 }
+
+
+/* =========================================================
+   INSTALLAZIONE AREA V.I.P.
+========================================================= */
+.install-banner {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 18px;
+  margin: 0 0 18px;
+  padding: 18px 20px;
+  background:
+    radial-gradient(circle at 90% 10%, rgba(211,170,38,.12), transparent 30%),
+    linear-gradient(180deg, #19191d, #101012);
+  border: 1px solid rgba(224,183,43,.55);
+  border-radius: 20px;
+  box-shadow: 0 14px 32px rgba(0,0,0,.25);
+}
+.install-banner h2 {
+  margin: 2px 0 6px;
+  font-size: 1.16rem;
+}
+.install-help {
+  margin: 0;
+  color: #d7d7dc;
+  font-size: .86rem;
+  line-height: 1.45;
+}
+.install-app-btn {
+  min-width: 230px;
+  white-space: nowrap;
+}
+@media (max-width: 620px) {
+  .install-banner {
+    grid-template-columns: 1fr;
+  }
+  .install-app-btn {
+    width: 100%;
+    min-width: 0;
+  }
+}
