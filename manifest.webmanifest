@@ -1,7 +1,9 @@
 {
   "name": "AREA V.I.P. - Vape Is Possible",
   "short_name": "AREA V.I.P.",
+  "id": "./",
   "start_url": "./",
+  "scope": "./",
   "display": "standalone",
   "background_color": "#121212",
   "theme_color": "#222222",
