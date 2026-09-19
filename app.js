@@ -30,7 +30,7 @@ let currentUser = null;
 let currentCard = null;
 let currentRecoveryCode = '';
 const CURRENT_PRIVACY_VERSION = '2026-09-v4';
-const CURRENT_REGULATION_VERSION = '2026-09-v2';
+const CURRENT_REGULATION_VERSION = '2026-09-v3';
 function sanitizeName(v) { return v.trim().replace(/\s+/g, ' '); }
 function calculateAge(isoDate) {
   const birth = new Date(isoDate + 'T12:00:00');
@@ -665,7 +665,7 @@ if (!$('regulationConsent').checked) { $('formError').textContent = 'Devi accett
 privacyVersion: '2026-09-v4',
 
 regulationConsent: true,
-regulationVersion: '2026-09-v2',
+regulationVersion: '2026-09-v3',
 
 marketingConsent: $('marketingConsent').checked,
 
@@ -782,3 +782,82 @@ $('enableNotifications').addEventListener('click', async () => {
   }
 });
 if ('serviceWorker' in navigator) window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(() => {}));
+
+
+/* =========================================================
+   INSTALLAZIONE PWA / AREA V.I.P.
+========================================================= */
+let deferredInstallPrompt = null;
+
+function isStandaloneMode() {
+  return window.matchMedia('(display-mode: standalone)').matches
+    || window.navigator.standalone === true;
+}
+
+function isIOSDevice() {
+  return /iphone|ipad|ipod/i.test(window.navigator.userAgent);
+}
+
+function refreshInstallBanner() {
+  const banner = $('installBanner');
+  const btn = $('installAppBtn');
+  const help = $('installHelp');
+  if (!banner || !btn || !help) return;
+
+  if (isStandaloneMode()) {
+    banner.classList.add('hidden');
+    return;
+  }
+
+  banner.classList.remove('hidden');
+
+  if (deferredInstallPrompt) {
+    btn.disabled = false;
+    btn.textContent = 'SCARICA LA TUA V.I.P. CARD';
+    help.textContent = 'Installa AREA V.I.P. sul telefono e aprila come una vera app.';
+    return;
+  }
+
+  if (isIOSDevice()) {
+    btn.disabled = false;
+    btn.textContent = 'COME INSTALLARLA SU IPHONE';
+    help.textContent = 'Su iPhone apri questa pagina in Safari, tocca Condividi e scegli “Aggiungi alla schermata Home”.';
+    return;
+  }
+
+  btn.disabled = false;
+  btn.textContent = 'SCARICA LA TUA V.I.P. CARD';
+  help.textContent = 'Se il telefono non mostra l’installazione automatica, apri il menu del browser e scegli “Installa app” o “Aggiungi a schermata Home”.';
+}
+
+window.addEventListener('beforeinstallprompt', event => {
+  event.preventDefault();
+  deferredInstallPrompt = event;
+  refreshInstallBanner();
+});
+
+window.addEventListener('appinstalled', () => {
+  deferredInstallPrompt = null;
+  $('installBanner')?.classList.add('hidden');
+});
+
+window.addEventListener('load', refreshInstallBanner);
+
+$('installAppBtn')?.addEventListener('click', async () => {
+  if (deferredInstallPrompt) {
+    deferredInstallPrompt.prompt();
+    try {
+      await deferredInstallPrompt.userChoice;
+    } catch {}
+    deferredInstallPrompt = null;
+    refreshInstallBanner();
+    return;
+  }
+
+  if (isIOSDevice()) {
+    alert('Su iPhone: apri il menu Condividi di Safari e scegli “Aggiungi alla schermata Home”.');
+    return;
+  }
+
+  alert('Apri il menu del browser e scegli “Installa app” oppure “Aggiungi a schermata Home”.');
+});
