@@ -67,3 +67,34 @@ test('HTML puts recovery before form and install after the card, with distinct l
   assert.equal(html.includes('SCARICA LA TUA V.I.P. CARD'), false);
   assert.equal(html.includes('AREA V.I.P.'), false);
 });
+test('server confirmation succeeds even when browser storage is blocked', async () => {
+  const s = setup();
+  s.run(`currentUser = { uid: 'test-user' }; currentCard = ${JSON.stringify(card)}; currentRecoveryCode = 'RCV-TEST';`);
+  s.element('updatePrivacyConsent').checked = true;
+  s.element('updateRegulationConsent').checked = true;
+  s.element('consentUpdateModal').classList.remove('hidden');
+  let writes = 0;
+  s.ctx.setDoc = async () => { writes++; };
+  s.ctx.localStorage.setItem = () => { throw new Error('Storage blocked'); };
+  await s.element('confirmConsentUpdate').handlers.click();
+  assert.equal(writes, 1);
+  assert.equal(s.element('consentUpdateModal').classList.contains('hidden'), true);
+  assert.equal(s.element('consentUpdateError').textContent, '');
+  assert.equal(s.element('confirmConsentUpdate').disabled, false);
+});
+test('a rejected server write keeps confirmation open and does not cache acceptance', async () => {
+  const s = setup();
+  s.run(`currentUser = { uid: 'test-user' }; currentCard = ${JSON.stringify({ ...card, privacyVersion: 'old' })}; currentRecoveryCode = 'RCV-TEST';`);
+  s.element('updatePrivacyConsent').checked = true;
+  s.element('updateRegulationConsent').checked = true;
+  s.element('consentUpdateModal').classList.remove('hidden');
+  let cacheWrites = 0;
+  s.ctx.localStorage.setItem = () => { cacheWrites++; };
+  s.ctx.setDoc = async () => { throw Object.assign(new Error('Denied'), { code: 'permission-denied' }); };
+  await s.element('confirmConsentUpdate').handlers.click();
+  assert.equal(cacheWrites, 0);
+  assert.equal(s.element('consentUpdateModal').classList.contains('hidden'), false);
+  assert.match(s.element('consentUpdateError').textContent, /CONSENSO-01/);
+  assert.equal(s.run('currentCard.privacyVersion'), 'old');
+  assert.equal(s.element('confirmConsentUpdate').disabled, false);
+});

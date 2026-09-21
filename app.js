@@ -650,21 +650,30 @@ $('confirmConsentUpdate').addEventListener('click', async () => {
     currentCard.regulationConsent = true;
     currentCard.regulationVersion = CURRENT_REGULATION_VERSION;
 
-    localStorage.setItem(
-      `vipConsent:${currentCard.cardCode}`,
-      JSON.stringify({
-        privacyVersion: CURRENT_PRIVACY_VERSION,
-        regulationVersion: CURRENT_REGULATION_VERSION
-      })
-    );
+    // The server record is authoritative. A blocked/full browser cache must
+    // not turn a successful confirmation into an error or keep the modal open.
+    try {
+      localStorage.setItem(
+        `vipConsent:${currentCard.cardCode}`,
+        JSON.stringify({
+          privacyVersion: CURRENT_PRIVACY_VERSION,
+          regulationVersion: CURRENT_REGULATION_VERSION
+        })
+      );
+    } catch (storageError) {
+      console.warn('Conferma salvata; cache locale non disponibile:', storageError);
+    }
 
     $('consentUpdateModal').classList.add('hidden');
     refreshInstallBanner();
 
   } catch (err) {
     console.error('Errore salvataggio consensi:', err);
-    error.textContent =
-      'Non è stato possibile registrare la conferma. Riprova.';
+    error.textContent = err?.code === 'permission-denied'
+      ? 'Il servizio non ha autorizzato il salvataggio della conferma. Contatta V.I.P. (CONSENSO-01).'
+      : err?.code === 'unauthenticated'
+        ? 'La sessione è scaduta. Ricarica la pagina e riprova. (CONSENSO-02).'
+        : 'Non è stato possibile registrare la conferma. Controlla la connessione e riprova.';
   } finally {
     btn.disabled = false;
     btn.textContent = 'CONFERMA E CONTINUA';
