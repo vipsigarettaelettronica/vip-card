@@ -1,0 +1,124 @@
+rules_version = '2';
+
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+
+    function isAdmin() {
+      return signedIn()
+        && request.auth.token.email == 'vipsigarettaelettronica@gmail.com';
+    }
+
+
+    match /cards/{cardId} {
+      allow get: if isAdmin() || (signedIn() && request.auth.uid == cardId);
+      allow list: if isAdmin();
+
+
+      allow create: if signedIn()
+  && request.auth.uid == cardId
+  && request.resource.data.ownerUid == request.auth.uid
+  && request.resource.data.privacyConsent == true
+  && request.resource.data.regulationConsent == true
+  && request.resource.data.privacyVersion == '2026-09-v4'
+&& request.resource.data.regulationVersion == '2026-09-v3'
+  && request.resource.data.marketingConsent is bool
+  && request.resource.data.consentRecordedAt == request.time;
+
+
+      allow update: if isAdmin()
+        || (signedIn()
+          && request.auth.uid == cardId
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['recoveryKey', 'recoveryUpdatedAt'])
+          && request.resource.data.ownerUid == resource.data.ownerUid
+          && request.resource.data.cardCode == resource.data.cardCode);
+
+
+      allow delete: if isAdmin();
+    }
+
+
+    match /recoveries/{recoveryCode} {
+      // Il codice di recupero è una chiave casuale ad alta entropia: chi lo conosce può recuperare
+      // soltanto i dati minimi necessari a ricostruire la tessera, non telefono/e-mail/data completa.
+      allow get: if true;
+      allow list: if false;
+
+
+      allow create: if isAdmin()
+        || (signedIn() && request.resource.data.ownerUid == request.auth.uid);
+
+
+      allow update, delete: if isAdmin();
+    }
+    match /consentAcceptances/{recoveryCode} {
+  allow get: if signedIn();
+  allow list: if isAdmin();
+
+
+  allow create, update: if signedIn()
+    && recoveryCode == request.resource.data.recoveryCode
+    && request.resource.data.acceptedByUid == request.auth.uid
+    && request.resource.data.privacyConsent == true
+    && request.resource.data.privacyVersion == '2026-09-v4'
+    && request.resource.data.regulationConsent == true
+    && request.resource.data.regulationVersion == '2026-09-v3'
+    && request.resource.data.acceptedAt == request.time
+    && request.resource.data.cardCode ==
+       get(/databases/$(database)/documents/recoveries/$(recoveryCode)).data.cardCode;
+
+
+  allow delete: if isAdmin();
+}
+    match /pushSubscriptions/{subscriptionId} {
+  allow get: if isAdmin() || signedIn();
+
+
+  allow list: if isAdmin();
+
+
+  allow create: if signedIn()
+    && request.resource.data.ownerUid == request.auth.uid
+    && request.resource.data.token is string;
+
+
+  allow update: if isAdmin()
+    || (
+      signedIn()
+      && resource.data.ownerUid == request.auth.uid
+      && request.resource.data.ownerUid == request.auth.uid
+    );
+
+
+  allow delete: if isAdmin()
+    || (
+      signedIn()
+      && resource.data.ownerUid == request.auth.uid
+    );
+}
+    match /messages/{messageId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+      match /messageReads/{readId} {
+      allow get, list, delete: if isAdmin();
+
+
+      allow create, update: if signedIn()
+        && request.resource.data.viewerUid == request.auth.uid
+        && request.resource.data.messageId is string
+        && request.resource.data.cardCode is string
+        && request.resource.data.recoveryCode is string
+        && readId == request.resource.data.messageId + '__' + request.resource.data.cardCode
+        && get(
+          /databases/$(database)/documents/recoveries/$(request.resource.data.recoveryCode)
+        ).data.cardCode == request.resource.data.cardCode;
+    }
+}
+}

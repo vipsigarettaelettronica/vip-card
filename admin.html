@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#222222">
   <meta name="robots" content="noindex,nofollow">
   <title>Gestione V.I.P. Card</title>
-  <link rel="stylesheet" href="styles.css?v=6.1.0">
+  <link rel="stylesheet" href="styles.css?v=6.3.0">
 </head>
 <body>
   <main class="admin-shell">
@@ -52,7 +52,8 @@
 
       <section class="panel admin-messages">
         <p class="eyebrow">COMUNICAZIONI AREA V.I.P.</p>
-        <h2>Pubblica un messaggio</h2>
+        <h2>Comunicazione a tutti</h2>
+        <p>Questo messaggio sarà visibile a tutti i clienti. Per un messaggio personale, apri la scheda del destinatario.</p>
         <div class="admin-message-form">
           <label>Titolo
             <input id="messageTitle" type="text" maxlength="80" placeholder="Es. Chiusura straordinaria">
@@ -61,7 +62,7 @@
             <textarea id="messageBody" maxlength="500" rows="4" placeholder="Scrivi la comunicazione che resterà consultabile nell'app."></textarea>
           </label>
           <div class="admin-message-buttons">
-            <button id="publishMessage" class="primary" type="button">PUBBLICA COMUNICAZIONE</button>
+            <button id="publishMessage" class="primary" type="button">PUBBLICA PER TUTTI</button>
             <button id="refreshMessageReads" class="secondary" type="button">AGGIORNA LETTURE</button>
           </div>
           <p id="messageAdminStatus" class="muted-line"></p>
@@ -99,10 +100,24 @@
         <button id="redeemBirthday" class="primary hidden" type="button">UTILIZZA COUPON -15%</button>
         <button id="toggleReview" class="secondary" type="button"></button>
       </div>
+      <section class="personal-message-panel" aria-labelledby="personalMessageHeading">
+        <h3 id="personalMessageHeading">Messaggio personale</h3>
+        <p>Destinatario: <strong id="personalMessageRecipient"></strong></p>
+        <p class="muted-line">Visibile soltanto al cliente che possiede questa tessera. Il salvataggio nell’app non conferma l’invio di una notifica al telefono.</p>
+        <form id="personalMessageForm">
+          <label>Titolo<input id="personalMessageTitle" required maxlength="80" autocomplete="off"></label>
+          <label>Messaggio<textarea id="personalMessageBody" required maxlength="500" rows="4"></textarea></label>
+          <button id="sendPersonalMessage" class="primary" type="submit">INVIA A QUESTO CLIENTE</button>
+        </form>
+        <p id="personalMessageStatus" role="status" aria-live="polite"></p>
+        <h4>Storico messaggi personali</h4>
+        <button id="refreshPersonalMessages" class="secondary compact" type="button">AGGIORNA STORICO E LETTURE</button>
+        <div id="personalMessageHistory"></div>
+      </section>
       <p class="danea-note">I punti fedeltà restano gestiti in Danea. Questa area serve a gestire la tessera digitale e l'associazione del codice cliente.</p>
     </div>
   </div>
 
-  <script type="module" src="admin.js?v=6.1.0"></script>
+  <script type="module" src="admin.js?v=6.3.0"></script>
 </body>
 </html>
