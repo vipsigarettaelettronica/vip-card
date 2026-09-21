@@ -178,3 +178,35 @@ test('registration saves optional gender in the field used by admin filters, wit
     const recovery=writes.find(x=>x.ref.startsWith('recoveries/'));assert.ok(recovery);assert.equal('adminGender' in recovery.data,false);
   }
 });
+
+test('installed iPhone with empty session offers recovery; existing card and Safari are preserved', async () => {
+  const s = setup();
+  s.ctx.window.navigator.userAgent = 'iPhone';
+  s.ctx.window.navigator.standalone = true;
+  s.run('offerInstalledCardRecovery()');
+  assert.equal(s.element('registrationView').classList.contains('hidden'), true);
+  assert.equal(s.element('recoveryView').classList.contains('hidden'), false);
+  await s.run(`showCard(${JSON.stringify(card)}, 'RCV-TEST', true)`);
+  s.run('offerInstalledCardRecovery()');
+  assert.equal(s.element('cardView').classList.contains('hidden'), false);
+  const safari = setup();
+  safari.ctx.window.navigator.userAgent = 'iPhone';
+  safari.run('offerInstalledCardRecovery()');
+  assert.equal(safari.element('registrationView').classList.contains('hidden'), false);
+});
+
+test('iPhone installation copies existing recovery code and handles denied clipboard without losing instructions', async () => {
+  const s = setup();
+  s.ctx.window.navigator.userAgent = 'iPhone';
+  await s.run(`showCard(${JSON.stringify(card)}, 'RCV-ABCD-EFGH-JKLM-NPQR', true)`);
+  let copied, message;
+  s.ctx.navigator.clipboard = {writeText: async code => { copied = code; }};
+  s.ctx.alert = text => { message = text; };
+  await s.element('installAppBtn').handlers.click();
+  assert.equal(copied, 'RCV-ABCD-EFGH-JKLM-NPQR');
+  assert.match(message, /RECUPERA LA TESSERA/);
+  s.ctx.navigator.clipboard.writeText = async () => { throw new Error('Denied'); };
+  await s.element('installAppBtn').handlers.click();
+  assert.match(message, /RCV-ABCD-EFGH-JKLM-NPQR/);
+  assert.match(message, /Non registrarti di nuovo/);
+});

@@ -648,6 +648,7 @@ async function ensureAnonymousSession() {
               } catch {}
             }
           }
+          offerInstalledCardRecovery();
           resolve(user);
         } catch (err) { reject(err); }
       } else {
@@ -908,6 +909,12 @@ function isIOSDevice() {
   return /iphone|ipad|ipod/i.test(window.navigator.userAgent);
 }
 
+function offerInstalledCardRecovery() {
+  if (!currentCard?.cardCode && isIOSDevice() && isStandaloneMode()) {
+    showRecovery();
+  }
+}
+
 function refreshInstallBanner() {
   const banner = $('installBanner');
   const btn = $('installAppBtn');
@@ -932,8 +939,8 @@ function refreshInstallBanner() {
 
   if (isIOSDevice()) {
     btn.disabled = false;
-    btn.textContent = 'INSTALLA L’APP SU IPHONE';
-    help.textContent = 'Installazione facoltativa: apri questa pagina in Safari, tocca Condividi e scegli “Aggiungi alla schermata Home”.';
+    btn.textContent = 'COPIA CODICE E INSTALLA SU IPHONE';
+    help.textContent = 'Prima copia il codice con il pulsante qui sotto. Poi, in Safari, tocca Condividi → Aggiungi alla schermata Home. Apri la nuova icona: se la tessera non compare, incolla il codice in “Recupera la tessera”. Non creare una seconda tessera.';
     return;
   }
 
@@ -968,7 +975,16 @@ $('installAppBtn')?.addEventListener('click', async () => {
   }
 
   if (isIOSDevice()) {
-    alert('Su iPhone: apri il menu Condividi di Safari e scegli “Aggiungi alla schermata Home”.');
+    if (!currentRecoveryCode) {
+      alert('Il codice della tessera non è ancora disponibile. Riapri la pagina prima di installare l’app.');
+      return;
+    }
+    let copied = false;
+    try {
+      await navigator.clipboard.writeText(currentRecoveryCode);
+      copied = true;
+    } catch {}
+    alert((copied ? 'Codice della tessera copiato.' : 'Conserva questo codice della tessera: ' + currentRecoveryCode) + '\n\n1. In Safari tocca Condividi → Aggiungi alla schermata Home.\n2. Apri l’icona V.I.P. Card.\n3. Se richiesto, incolla il codice e tocca RECUPERA LA TESSERA.\n\nRitroverai la stessa tessera. Non registrarti di nuovo.');
     return;
   }
 
