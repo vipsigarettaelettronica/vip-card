@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#222222">
   <meta name="robots" content="noindex,nofollow">
   <title>Gestione V.I.P. Card</title>
-  <link rel="stylesheet" href="styles.css?v=6.4.0">
+  <link rel="stylesheet" href="styles.css?v=6.5.0">
 </head>
 <body>
   <main class="admin-shell">
@@ -45,9 +45,32 @@
         </label>
         <div class="filter-row">
           <label><input id="birthdayFilter" type="checkbox"> Compleanni nei prossimi 30 giorni</label>
-          <label><input id="daneaFilter" type="checkbox"> Solo da associare a Danea</label>
+          <label>Associazione Danea<select id="daneaFilter"><option value="">Tutti</option><option value="unlinked">Non associati a Danea</option><option value="linked">Associati a Danea</option></select></label>
+          <label>Genere<select id="genderFilter"><option value="">Tutti</option><option value="female">Donne</option><option value="male">Uomini</option><option value="other">Altro</option><option value="unknown">Non indicato</option></select></label>
+          <label>Consenso marketing<select id="consentFilter"><option value="">Tutti</option><option value="yes">Con consenso</option><option value="no">Senza consenso</option></select></label>
+          <label>Categoria<select id="categoryFilter"><option value="">Tutte le categorie</option></select></label>
         </div>
+        <p class="muted-line">Puoi combinare i filtri. Genere e categorie si compilano aprendo la scheda cliente.</p>
         <p id="resultCount" class="muted-line"></p>
+        <div class="admin-message-buttons"><button id="selectVisible" class="secondary" type="button">SELEZIONA I RISULTATI</button><button id="clearSelection" class="secondary" type="button">DESELEZIONA TUTTI</button><button id="resetFilters" class="secondary" type="button">AZZERA FILTRI</button></div>
+        <p id="selectionCount" role="status"></p><button id="composeGroup" class="primary" type="button">SCRIVI AI SELEZIONATI</button>
+      </section>
+
+      <section id="customerList" class="customer-list" aria-live="polite"></section>
+      <section class="panel group-messages">
+        <h2>Messaggio ai clienti selezionati</h2>
+        <p>Ogni destinatario riceve un messaggio personale nella propria app e, se attive, le notifiche.</p>
+        <form id="groupMessageForm" class="admin-message-form">
+          <label>Tipo<select id="groupKind"><option value="service">Comunicazione di servizio</option><option value="marketing">Promozione — solo con consenso</option></select></label>
+          <p id="groupRecipientsCount" role="status"></p>
+          <details><summary>Controlla i destinatari</summary><ul id="groupRecipients"></ul></details>
+          <label>Titolo<input id="groupTitle" required maxlength="80"></label>
+          <label>Messaggio<textarea id="groupBody" required maxlength="500" rows="4"></textarea></label>
+          <button id="sendGroupMessage" class="primary" type="submit">INVIA AI SELEZIONATI</button>
+        </form>
+        <p id="groupStatus" role="status" aria-live="polite"></p>
+        <div class="admin-message-buttons"><button id="retryGroup" class="secondary hidden" type="button">RIPROVA GLI INVII NON CONFERMATI</button><button id="newGroup" class="secondary hidden" type="button">NUOVO MESSAGGIO</button></div>
+        <ul id="groupResults"></ul>
       </section>
 
       <section class="panel admin-messages">
@@ -71,7 +94,6 @@
         <div id="adminMessageList" class="admin-message-list"></div>
       </section>
 
-      <section id="customerList" class="customer-list" aria-live="polite"></section>
       <p id="adminError" class="error admin-error" aria-live="assertive"></p>
     </section>
   </main>
@@ -94,6 +116,12 @@
         <div><dt>V.I.P. Birthday</dt><dd id="detailBirthdayCoupon"></dd></div>
         <div><dt>Recensione Google</dt><dd id="detailReview"></dd></div>
       </dl>
+      <form id="customerGroupsForm" class="admin-message-form">
+        <h3>Gruppi cliente</h3>
+        <label>Genere (facoltativo)<select id="detailGender"><option value="unknown">Non indicato</option><option value="female">Donna</option><option value="male">Uomo</option><option value="other">Altro</option></select></label>
+        <label>Categorie (separate da virgola)<input id="detailCategories" maxlength="200" placeholder="Es. Clienti abituali, Da ricontattare"></label>
+        <button id="saveCustomerGroups" class="secondary" type="submit">SALVA GRUPPI</button><p id="customerGroupsStatus" role="status"></p>
+      </form>
       <div class="admin-modal-actions">
         <button id="copyDetailCode" class="secondary" type="button">COPIA CODICE TESSERA</button>
         <button id="toggleDanea" class="primary" type="button"></button>
@@ -120,6 +148,6 @@
     </div>
   </div>
 
-  <script type="module" src="admin.js?v=6.4.1"></script>
+  <script type="module" src="admin.js?v=6.5.0"></script>
 </body>
 </html>

@@ -1,8 +1,9 @@
+import { matchesGroup, recipientSnapshot, deliverGroup } from './customer-groups.js?v=6.5.0';
 import { getMessaging, isSupported, onMessage } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging.js';
 import { sendMessageNotification, notificationSummary } from './push-client.js?v=6.4.0';
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
 import { getAuth, GoogleAuthProvider, onAuthStateChanged, signInWithPopup, signOut } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
-import { collection, deleteDoc, doc, getDocs, getFirestore, serverTimestamp, setDoc, updateDoc } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+import { collection, deleteDoc, doc, getDocs, getFirestore, runTransaction, serverTimestamp, setDoc, updateDoc } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 
 const firebaseConfig = {
   apiKey: 'AIzaSyD-q497X-cHUezvOBL_TKc3L8sHmNQOLDs',
@@ -37,6 +38,9 @@ provider.setCustomParameters({ prompt: 'select_account' });
 
 const $ = id => document.getElementById(id);
 let allCards = [];
+const selectedCustomers = new Set();
+let groupJob = null;
+let groupPending = false;
 let selectedCard = null;
 let adminMessages = [];
 let messageReads = [];
@@ -111,12 +115,12 @@ function updateStats() {
 function filteredCards() {
   const q = clean($('searchInput').value).toLowerCase();
   const birthdays = $('birthdayFilter').checked;
-  const onlyDanea = $('daneaFilter').checked;
+  const groupFilters = {danea:$('daneaFilter').value,gender:$('genderFilter').value,consent:$('consentFilter').value,category:$('categoryFilter').value};
   return allCards.filter(c => {
     const haystack = [fullName(c), c.phone, c.email, c.cardCode].map(clean).join(' ').toLowerCase();
     if (q && !haystack.includes(q)) return false;
     if (birthdays && nextBirthdayDays(c.birthDate) > 30) return false;
-    if (onlyDanea && c.daneaLinked === true) return false;
+    if (!matchesGroup(c, groupFilters)) return false;
     return true;
   });
 }
@@ -128,13 +132,15 @@ function birthdayLabel(c) {
 }
 function render() {
   updateStats();
+  updateCategoryChoices();
+  updateSelection();
   const cards = filteredCards();
   $('resultCount').textContent = `${cards.length} ${cards.length === 1 ? 'tessera trovata' : 'tessere trovate'}`;
   const list = $('customerList');
   if (!cards.length) { list.innerHTML = '<div class="panel empty-state">Nessun cliente corrisponde ai filtri.</div>'; return; }
   list.innerHTML = cards.map(c => `
     <article class="customer-card" data-id="${escapeHtml(c.id)}">
-      <div class="customer-main">
+      <div class="customer-main"><label class="customer-select"><input type="checkbox" class="select-customer" data-id="${escapeHtml(c.id)}" ${selectedCustomers.has(c.id) ? 'checked' : ''} ${groupPending ? 'disabled' : ''}> Seleziona ${escapeHtml(fullName(c) || c.cardCode)}</label>
         <div class="customer-title-row"><h3>${escapeHtml(fullName(c) || 'Cliente')}</h3>${birthdayLabel(c)}${couponLabel(c)}</div>
         <div class="customer-code">${escapeHtml(c.cardCode || '—')}</div>
         <div class="customer-meta"><span>${escapeHtml(c.phone || 'Telefono non indicato')}</span><span>${escapeHtml(c.email || 'E-mail non indicata')}</span></div>
@@ -144,12 +150,16 @@ function render() {
         <button class="secondary compact open-customer" data-id="${escapeHtml(c.id)}" type="button">APRI</button>
       </div>
     </article>`).join('');
+  list.querySelectorAll('.select-customer').forEach(box => box.addEventListener('change', () => { if(box.checked) selectedCustomers.add(box.dataset.id); else selectedCustomers.delete(box.dataset.id); updateSelection(); }));
   list.querySelectorAll('.open-customer').forEach(btn => btn.addEventListener('click', () => openDetail(btn.dataset.id)));
 }
 
 function openDetail(id) {
   const c = allCards.find(x => x.id === id); if (!c) return;
   selectedCard = c;
+  $('detailGender').value = c.adminGender || 'unknown';
+  $('detailCategories').value = (c.adminCategories || []).join(', ');
+  $('customerGroupsStatus').textContent = '';
   $('detailName').textContent = fullName(c) || 'Cliente';
   $('detailCardCode').textContent = c.cardCode || '—';
   $('detailPhone').textContent = c.phone || '—';
@@ -444,6 +454,9 @@ $('copyDetailCode').addEventListener('click', async () => {
 
 onAuthStateChanged(auth, async user => {
   if (!user || user.isAnonymous) {
+    selectedCustomers.clear(); groupJob = null; allCards = [];
+    $('groupMessageForm').reset(); $('groupResults').textContent = ''; $('groupStatus').textContent = '';
+    $('customerList').textContent = ''; $('customerModal').classList.add('hidden');
     if (user?.isAnonymous) await signOut(auth);
     $('loginPanel').classList.remove('hidden');
     $('adminPanel').classList.add('hidden');
@@ -552,3 +565,110 @@ async function notifySavedMessage(message) {
       : 'Messaggio salvato nell’app. Invio della notifica non confermato; non serve riscrivere il messaggio.';
   }
 }
+
+function updateCategoryChoices() {
+  const current = $('categoryFilter').value;
+  const categories = [...new Set(allCards.flatMap(c => Array.isArray(c.adminCategories) ? c.adminCategories : []))].sort((a,b)=>a.localeCompare(b,'it'));
+  $('categoryFilter').innerHTML = '<option value="">Tutte le categorie</option>' + categories.map(c=>`<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
+  $('categoryFilter').value = categories.includes(current) ? current : '';
+}
+function updateSelection() {
+  const visible = new Set(filteredCards().map(c=>c.id));
+  const selected = allCards.filter(c=>selectedCustomers.has(c.id));
+  const hidden = selected.filter(c=>!visible.has(c.id)).length;
+  $('selectionCount').textContent = `${selected.length} clienti selezionati${hidden ? `, di cui ${hidden} fuori dai filtri attuali` : ''}.`;
+  const recipients = recipientSnapshot(allCards, selectedCustomers, $('groupKind').value);
+  const excluded = selected.length - recipients.length;
+  $('groupRecipientsCount').textContent = `${recipients.length} destinatari${excluded ? ` · ${excluded} esclusi perché senza consenso marketing` : ''}.`;
+  $('groupRecipients').innerHTML = recipients.map(c=>`<li>${escapeHtml(fullName(c))} · ${escapeHtml(c.cardCode)}</li>`).join('');
+  $('sendGroupMessage').disabled = groupPending || !!groupJob || !recipients.length;
+  $('composeGroup').disabled = !selected.length;
+}
+for (const id of ['genderFilter','consentFilter','categoryFilter','groupKind']) $(id).addEventListener('change', render);
+$('selectVisible').addEventListener('click', () => { if(groupPending) return; filteredCards().forEach(c=>selectedCustomers.add(c.id)); render(); });
+$('clearSelection').addEventListener('click', () => { if(groupPending) return; selectedCustomers.clear(); render(); });
+$('resetFilters').addEventListener('click', () => {
+  $('searchInput').value=''; $('birthdayFilter').checked=false;
+  for(const id of ['daneaFilter','genderFilter','consentFilter','categoryFilter']) $(id).value='';
+  render();
+});
+$('customerGroupsForm').addEventListener('submit', async event => {
+  event.preventDefault();
+  if(!selectedCard || !isAdmin(auth.currentUser)) return;
+  const id=selectedCard.id;
+  const adminGender=$('detailGender').value;
+  const adminCategories=[...new Set($('detailCategories').value.split(',').map(clean).filter(Boolean))];
+  if(!['unknown','female','male','other'].includes(adminGender) || adminCategories.length>10 || adminCategories.some(x=>x.length>40)) {
+    $('customerGroupsStatus').textContent='Usa al massimo 10 categorie, ciascuna entro 40 caratteri.'; return;
+  }
+  $('saveCustomerGroups').disabled=true;
+  try {
+    await updateDoc(doc(db,'cards',id),{adminGender,adminCategories});
+    const card=allCards.find(c=>c.id===id); if(card) Object.assign(card,{adminGender,adminCategories});
+    if(selectedCard?.id===id) $('customerGroupsStatus').textContent='Gruppi salvati.';
+    render();
+  } catch { if(selectedCard?.id===id) $('customerGroupsStatus').textContent='Salvataggio non riuscito. Riprova.'; }
+  finally { $('saveCustomerGroups').disabled=false; }
+});
+function showGroupProgress(job) {
+  if(groupJob!==job) return;
+  const saved=job.items.filter(i=>i.saved).length;
+  const skipped=job.items.filter(i=>i.state==='skipped').length;
+  const errors=job.items.filter(i=>i.state==='save-error'||i.state==='push-error').length;
+  const accepted=job.items.reduce((n,i)=>n+Number(i.result?.accepted||0)+Number(i.result?.alreadyAccepted||0),0);
+  $('groupStatus').textContent=`${groupPending?'Invio in corso. ':''}Messaggi salvati: ${saved}/${job.items.length}. Destinatari esclusi al controllo: ${skipped}. Notifiche accettate: ${accepted} dispositivi. ${errors ? `Invii da verificare: ${errors}.` : ''} L’accettazione della notifica non conferma la ricezione sul telefono.`;
+  const labels={'pending':'In attesa','done':'Messaggio salvato','skipped':'Escluso: tessera assente o consenso non disponibile','save-error':'Salvataggio non confermato','push-error':'Messaggio salvato; notifica non confermata'};
+  $('groupResults').innerHTML=job.items.map(i=>`<li>${escapeHtml(fullName(i.customer))} · ${escapeHtml(i.customer.cardCode)}: ${labels[i.state]}${i.state==='done' && !((i.result?.accepted||0)+(i.result?.alreadyAccepted||0)) ? ' · nessuna notifica accettata' : ''}</li>`).join('');
+  $('retryGroup').classList.toggle('hidden',groupPending || !errors);
+  $('newGroup').classList.toggle('hidden',groupPending);
+}
+async function runGroupJob(job) {
+  if(groupPending || groupJob!==job || !isAdmin(auth.currentUser)) return;
+  groupPending=true;
+  for(const id of ['groupKind','groupTitle','groupBody','logoutBtn','selectVisible','clearSelection','retryGroup','newGroup']) $(id).disabled=true;
+  render(); showGroupProgress(job);
+  try {
+    await deliverGroup(job, {
+      save: async item => {
+        if(groupJob!==job || !isAdmin(auth.currentUser)) throw new Error('Signed out');
+        return runTransaction(db, async transaction => {
+          // Fixed message ID: a retry after an uncertain write cannot create a duplicate.
+          const existing=await transaction.get(item.ref);
+          const card=await transaction.get(doc(db,'cards',item.customer.id));
+          if(!card.exists() || (job.kind==='marketing' && card.data().marketingConsent!==true)) return false;
+          if(!existing.exists()) transaction.set(item.ref,{title:job.title,body:job.body,active:true,publishedAt:serverTimestamp()});
+          return true;
+        });
+      },
+      push: async item => {
+        if(groupJob!==job || !isAdmin(auth.currentUser)) throw new Error('Signed out');
+        return sendMessageNotification(auth.currentUser,{scope:'personal',ownerUid:item.customer.id,messageId:item.ref.id,kind:job.kind});
+      },
+      progress:()=>showGroupProgress(job)
+    });
+  } finally {
+    groupPending=false;
+    for(const id of ['groupKind','groupTitle','groupBody','logoutBtn','selectVisible','clearSelection','retryGroup','newGroup']) $(id).disabled=false;
+    if(groupJob===job) { showGroupProgress(job); render(); }
+  }
+}
+$('groupMessageForm').addEventListener('submit', async event => {
+  event.preventDefault();
+  if(groupPending || groupJob || !isAdmin(auth.currentUser)) return;
+  const title=clean($('groupTitle').value), body=clean($('groupBody').value), kind=$('groupKind').value;
+  if(!title || !body || title.length>80 || body.length>500 || !['service','marketing'].includes(kind)) return;
+  const recipients=recipientSnapshot(allCards,selectedCustomers,kind);
+  if(!recipients.length) return;
+  if(!confirm(`Inviare “${title}” a ${recipients.length} clienti selezionati?\n${kind==='marketing'?'Solo clienti con consenso marketing.':'Comunicazione di servizio.'}\nOgni cliente riceverà un messaggio personale.`)) return;
+  groupJob={title,body,kind,items:recipients.map(customer=>({customer,ref:doc(collection(db,'personalInboxes',customer.id,'messages')),saved:false,state:'pending'}))};
+  await runGroupJob(groupJob);
+});
+$('retryGroup').addEventListener('click',()=>{ if(groupJob) runGroupJob(groupJob); });
+$('newGroup').addEventListener('click',()=>{
+  if(groupPending) return;
+  if(groupJob?.items.some(i=>i.state==='save-error'||i.state==='push-error') && !confirm('Ci sono invii non confermati. Creare un nuovo messaggio invece di riprovarli?')) return;
+  groupJob=null; $('groupMessageForm').reset(); $('groupStatus').textContent=''; $('groupResults').textContent='';
+  $('retryGroup').classList.add('hidden'); $('newGroup').classList.add('hidden'); updateSelection();
+});
+
+$('composeGroup').addEventListener('click',()=> { $('groupMessageForm').scrollIntoView({behavior:'smooth',block:'start'}); $('groupTitle').focus({preventScroll:true}); });

@@ -2385,3 +2385,21 @@ button:active {
 .personal-message-panel textarea { min-height: 110px; resize: vertical; }
 .personal-message-panel p, .personal-message-panel strong { overflow-wrap: anywhere; }
 .personal-message-panel .admin-message-row { margin-top: 14px; }
+
+/* Admin recipient groups */
+.admin-tools .filter-row { align-items: start; gap: 16px; }
+.admin-tools .filter-row label { flex-wrap: wrap; min-width: 0; }
+.admin-tools select { width: 100%; min-width: 0; }
+.customer-select { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; cursor: pointer; }
+.customer-select input { width: 22px; height: 22px; flex: 0 0 22px; accent-color: #d9bc3f; }
+.group-messages { margin-top: 24px; }
+.group-messages details { border: 1px solid #605426; border-radius: 12px; padding: 12px; }
+.group-messages summary { cursor: pointer; }
+#groupRecipients, #groupResults { max-height: 260px; overflow: auto; overflow-wrap: anywhere; padding-left: 24px; }
+#groupResults li { margin-bottom: 8px; }
+#customerGroupsForm { padding: 18px 0; border-top: 1px solid #605426; }
+@media(max-width:600px) {
+ .admin-tools .filter-row { display: grid; grid-template-columns: 1fr; }
+ .admin-message-buttons { flex-wrap: wrap; }
+ .admin-message-buttons button { white-space: normal; }
+}
