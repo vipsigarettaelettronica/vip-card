@@ -35,7 +35,7 @@ async function updatePushState(payload, count) {
     await self.registration.showNotification('V.I.P. Card', {
       body: 'Hai un nuovo messaggio da V.I.P. Apri l’app per leggerlo.',
       icon: new URL('./assets/icon-192.png', self.registration.scope).href,
-      badge: new URL('./assets/notification-badge.png', self.registration.scope).href,
+      badge: new URL('./assets/notification-badge-negative.png', self.registration.scope).href,
       tag: 'vip-' + eventId, renotify: false, silent: false,
       data: {url}
     });
@@ -61,10 +61,10 @@ self.addEventListener('message', event => {
   if(event.data?.type === 'VIP_BADGE') event.waitUntil(queuePushWork(null,event.data.count));
   if(event.data?.type === 'VIP_FOREGROUND_PUSH') event.waitUntil(queuePushWork(event.data.payload));
 });
-const CACHE = 'vip-card-v6-4-2-notification-badge';
+const CACHE = 'vip-card-v6-4-3-negative-badge';
 const ASSETS = [
   './', './index.html', './styles.css?v=6.4.0', './app.js?v=6.4.0', './manifest.webmanifest', './privacy.html',
-  './assets/notification-badge.png', './assets/logo-vip.png', './assets/icon-192.png', './assets/icon-512.png', './assets/federica-avatar.webp?v=3',
+  './assets/notification-badge-negative.png', './assets/logo-vip.png', './assets/icon-192.png', './assets/icon-512.png', './assets/federica-avatar.webp?v=3',
   './admin.html', './admin.js?v=6.4.1', './push-client.js?v=6.4.0', './push-config.js?v=6.4.0'
 ];
 self.addEventListener('install', event => {
