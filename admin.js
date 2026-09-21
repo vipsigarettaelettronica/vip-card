@@ -1,3 +1,4 @@
+import { getMessaging, isSupported, onMessage } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging.js';
 import { sendMessageNotification, notificationSummary } from './push-client.js?v=6.4.0';
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
 import { getAuth, GoogleAuthProvider, onAuthStateChanged, signInWithPopup, signOut } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
@@ -16,6 +17,21 @@ const ADMIN_EMAIL = 'vipsigarettaelettronica@gmail.com';
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
+// A visible admin tab receives foreground FCM messages too, even when the PWA is closed.
+// Reuse the existing subscription and worker; never associate the admin login with a card.
+async function listenForAdminPush() {
+  if (typeof navigator === 'undefined' || !('serviceWorker' in navigator)) return;
+  if (!(await isSupported())) return;
+  onMessage(getMessaging(app), async payload => {
+    if (!payload.data?.eventId) return;
+    try {
+      const registration = await navigator.serviceWorker.getRegistration('./');
+      registration?.active?.postMessage({type: 'VIP_FOREGROUND_PUSH', payload: payload.data});
+    } catch { /* Receiving an alert must not interrupt administration. */ }
+  });
+}
+listenForAdminPush().catch(() => {});
+
 const provider = new GoogleAuthProvider();
 provider.setCustomParameters({ prompt: 'select_account' });
 
