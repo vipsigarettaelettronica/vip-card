@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#222222">
   <meta name="robots" content="noindex,nofollow">
   <title>Gestione V.I.P. Card</title>
-  <link rel="stylesheet" href="styles.css?v=6.3.0">
+  <link rel="stylesheet" href="styles.css?v=6.4.0">
 </head>
 <body>
   <main class="admin-shell">
@@ -55,6 +55,7 @@
         <h2>Comunicazione a tutti</h2>
         <p>Questo messaggio sarà visibile a tutti i clienti. Per un messaggio personale, apri la scheda del destinatario.</p>
         <div class="admin-message-form">
+          <label>Tipo di comunicazione<select id="messageKind"><option value="service">Comunicazione di servizio</option><option value="marketing">Promozione — solo con consenso</option></select></label>
           <label>Titolo
             <input id="messageTitle" type="text" maxlength="80" placeholder="Es. Chiusura straordinaria">
           </label>
@@ -62,7 +63,7 @@
             <textarea id="messageBody" maxlength="500" rows="4" placeholder="Scrivi la comunicazione che resterà consultabile nell'app."></textarea>
           </label>
           <div class="admin-message-buttons">
-            <button id="publishMessage" class="primary" type="button">PUBBLICA PER TUTTI</button>
+            <button id="publishMessage" class="primary" type="button">PUBBLICA E INVIA AVVISO</button>
             <button id="refreshMessageReads" class="secondary" type="button">AGGIORNA LETTURE</button>
           </div>
           <p id="messageAdminStatus" class="muted-line"></p>
@@ -103,8 +104,9 @@
       <section class="personal-message-panel" aria-labelledby="personalMessageHeading">
         <h3 id="personalMessageHeading">Messaggio personale</h3>
         <p>Destinatario: <strong id="personalMessageRecipient"></strong></p>
-        <p class="muted-line">Visibile soltanto al cliente che possiede questa tessera. Il salvataggio nell’app non conferma l’invio di una notifica al telefono.</p>
+        <p class="muted-line">Visibile soltanto al cliente che possiede questa tessera. Se il dispositivo è registrato per le notifiche riceverà anche un avviso. Per le promozioni è necessario il consenso del cliente.</p>
         <form id="personalMessageForm">
+          <label>Tipo di messaggio<select id="personalMessageKind"><option value="service">Comunicazione di servizio</option><option value="marketing">Promozione — solo con consenso</option></select></label>
           <label>Titolo<input id="personalMessageTitle" required maxlength="80" autocomplete="off"></label>
           <label>Messaggio<textarea id="personalMessageBody" required maxlength="500" rows="4"></textarea></label>
           <button id="sendPersonalMessage" class="primary" type="submit">INVIA A QUESTO CLIENTE</button>
@@ -118,6 +120,6 @@
     </div>
   </div>
 
-  <script type="module" src="admin.js?v=6.3.0"></script>
+  <script type="module" src="admin.js?v=6.4.0"></script>
 </body>
 </html>

@@ -11,6 +11,7 @@ function setup() {
   };
   const writes = [];
   const ctx = vm.createContext({console, Date, Uint8Array, Set, Map,
+    sendMessageNotification:async()=>({accepted:1}),notificationSummary:()=>"Messaggio salvato",
     document:{getElementById:el},initializeApp:()=>({}),getAuth:()=>({currentUser:{email:'vipsigarettaelettronica@gmail.com'}}),
     getFirestore:()=>({}),GoogleAuthProvider:class {setCustomParameters(){}},onAuthStateChanged(){},
     collection:(_, ...parts)=>parts.join('/'), doc:(base,...parts)=> typeof base==='string' ? base+'/new-id' : parts.join('/'),

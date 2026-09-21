@@ -1,7 +1,7 @@
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
 import { getAuth, onAuthStateChanged, signInAnonymously } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
 import { getFirestore, collection, doc, getDoc, setDoc, updateDoc, serverTimestamp, onSnapshot } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
-import { getMessaging, getToken, isSupported } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging.js';
+import { getMessaging, getToken, isSupported, onMessage } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging.js';
 const firebaseConfig = {
   apiKey: 'AIzaSyD-q497X-cHUezvOBL_TKc3L8sHmNQOLDs',
   authDomain: 'vip-card-22fbe.firebaseapp.com',
@@ -343,6 +343,11 @@ async function renderMessages(messages) {
         await markMessagesRead(newestFirst);
       }
     };
+    if (openMessagesFromNotification) {
+      openMessagesFromNotification = false;
+      if (list.classList.contains('hidden')) await toggle.onclick();
+      list.scrollIntoView?.({block:'nearest'});
+    }
   } catch (err) {
     console.warn('Comunicazioni non disponibili:', err);
     preview.innerHTML = '<p class="dashboard-copy">Le comunicazioni non sono disponibili in questo momento.</p>';
@@ -352,12 +357,14 @@ async function renderMessages(messages) {
 let messageUnsubscribers = [];
 let messageLoadGeneration = 0;
 let personalReadIds = new Set();
+let openMessagesFromNotification = new URL(location.href).searchParams.get('messages') === '1';
 
 function updateAppBadge(count) {
   // Unsupported systems keep using the unread counter inside the app.
   try {
     const result = count > 0 ? navigator.setAppBadge?.(count) : navigator.clearAppBadge?.();
     result?.catch(() => {});
+    navigator.serviceWorker?.controller?.postMessage({type:'VIP_BADGE',count});
   } catch {}
 }
 
@@ -822,6 +829,7 @@ ensureAnonymousSession().catch(err => {
   $('formError').textContent = 'Connessione al servizio tessere non disponibile. Ricarica la pagina.';
 });
 let notificationRefreshPending = false;
+let foregroundNotificationUnsubscribe = null;
 async function refreshNotificationRegistration(askPermission = false) {
   const btn = $('enableNotifications');
   const status = $('notificationStatus');
@@ -854,7 +862,13 @@ async function refreshNotificationRegistration(askPermission = false) {
         new Promise((_, reject) => { timeout = setTimeout(() => reject(new Error('Service worker non pronto')), 15000); })
       ]);
     } finally { clearTimeout(timeout); }
-    const token = await getToken(getMessaging(firebaseApp), { vapidKey: VAPID_KEY, serviceWorkerRegistration: registration });
+    const messaging = getMessaging(firebaseApp);
+    if (!foregroundNotificationUnsubscribe) {
+      foregroundNotificationUnsubscribe = onMessage(messaging, payload => {
+        if (payload.data?.eventId) registration.active?.postMessage({type:'VIP_FOREGROUND_PUSH',payload:payload.data});
+      });
+    }
+    const token = await getToken(messaging, { vapidKey: VAPID_KEY, serviceWorkerRegistration: registration });
     if (!token) throw new Error('Token notifiche non disponibile');
     await setDoc(doc(db, 'pushSubscriptions', userUid), {
       ownerUid: userUid, cardCode: card.cardCode,

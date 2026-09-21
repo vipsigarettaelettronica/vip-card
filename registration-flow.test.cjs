@@ -20,6 +20,7 @@ function setup() {
   }
   const storage = new Map();
   const ctx = vm.createContext({ console, Date, Uint8Array, URL, setTimeout, clearTimeout,
+    location: {href:"https://example.test/vip-card/"}, onMessage: () => () => {},
     requestAnimationFrame: fn => fn(), isSupported: async () => false,
     document: { getElementById: element, createElementNS: () => element('svgRect') },
     window: { addEventListener: (name, fn) => { events[name] = fn; }, matchMedia: () => ({ matches: false }), navigator: {} },

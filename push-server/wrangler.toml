@@ -1,0 +1,11 @@
+name = "vip-card-notifications"
+main = "worker.mjs"
+compatibility_date = "2026-09-21"
+workers_dev = true
+
+[vars]
+FIREBASE_PROJECT_ID = "vip-card-22fbe"
+ADMIN_EMAIL = "vipsigarettaelettronica@gmail.com"
+ALLOWED_ORIGIN = "https://vipsigarettaelettronica.github.io"
+APP_URL = "https://vipsigarettaelettronica.github.io/vip-card/"
+# Set FIREBASE_SERVICE_ACCOUNT as an encrypted Worker secret, never a plain variable.
