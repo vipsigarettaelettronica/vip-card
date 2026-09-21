@@ -1,3 +1,4 @@
+import { sendMessageNotification, notificationSummary } from './push-client.js?v=6.4.0';
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
 import { getAuth, GoogleAuthProvider, onAuthStateChanged, signInWithPopup, signOut } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
 import { collection, deleteDoc, doc, getDocs, getFirestore, serverTimestamp, setDoc, updateDoc } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
@@ -360,6 +361,7 @@ async function loadAdminMessages() {
 async function publishMessage() {
   const title = clean($('messageTitle').value);
   const body = clean($('messageBody').value);
+  const kind = $('messageKind').value;
   const status = $('messageAdminStatus');
 
   if (!title || !body) {
@@ -382,8 +384,9 @@ async function publishMessage() {
 
     $('messageTitle').value = '';
     $('messageBody').value = '';
-    status.textContent = 'Comunicazione pubblicata ✓';
+    const pushStatus = await notifySavedMessage({scope:'general',messageId:ref.id,kind});
     await loadAdminMessages();
+    status.textContent = pushStatus;
   } catch (err) {
     console.error(err);
     status.textContent = 'Pubblicazione non riuscita.';
@@ -494,6 +497,7 @@ $('personalMessageForm').addEventListener('submit', async event => {
   const customer = { ...selectedCard };
   const title = clean($('personalMessageTitle').value);
   const body = clean($('personalMessageBody').value);
+  const kind = $('personalMessageKind').value;
   if (!title || !body || title.length > 80 || body.length > 500) {
     $('personalMessageStatus').textContent = 'Inserisci titolo e messaggio.';
     return;
@@ -505,9 +509,10 @@ $('personalMessageForm').addEventListener('submit', async event => {
   try {
     const ref = doc(collection(db, 'personalInboxes', customer.id, 'messages'));
     await setDoc(ref, { title, body, active: true, publishedAt: serverTimestamp() });
+    const pushStatus = await notifySavedMessage({scope:'personal',ownerUid:customer.id,messageId:ref.id,kind});
     if (selectedCard?.id === customer.id) {
       $('personalMessageForm').reset();
-      $('personalMessageStatus').textContent = 'Messaggio personale salvato nell’app del cliente. Invio push non ancora disponibile da questa gestione.';
+      $('personalMessageStatus').textContent = pushStatus;
       await loadPersonalMessages(customer);
     }
   } catch (err) {
@@ -521,3 +526,13 @@ $('personalMessageForm').addEventListener('submit', async event => {
 $('refreshPersonalMessages').addEventListener('click', () => {
   if (selectedCard) loadPersonalMessages({ ...selectedCard });
 });
+
+async function notifySavedMessage(message) {
+  try { return notificationSummary(await sendMessageNotification(auth.currentUser, message)); }
+  catch (error) {
+    // The Firestore write already succeeded: never report that the message itself failed.
+    return error.message === 'PUSH_NOT_CONFIGURED'
+      ? 'Messaggio salvato nell’app. Il servizio notifiche non è ancora collegato.'
+      : 'Messaggio salvato nell’app. Invio della notifica non confermato; non serve riscrivere il messaggio.';
+  }
+}
