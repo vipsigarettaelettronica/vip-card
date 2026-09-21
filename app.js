@@ -347,12 +347,14 @@ function showRegistration() {
   registrationView.classList.remove('hidden');
   recoveryView.classList.add('hidden');
   cardView.classList.add('hidden');
+  refreshInstallBanner();
 }
 function showRecovery() {
   registrationView.classList.add('hidden');
   recoveryView.classList.remove('hidden');
   cardView.classList.add('hidden');
   $('recoveryError').textContent = '';
+  refreshInstallBanner();
   $('recoveryInput').focus();
 }
 async function showCard(data, recoveryCode='', recovered=false) {
@@ -459,6 +461,7 @@ try {
   registrationView.classList.add('hidden');
   recoveryView.classList.add('hidden');
   cardView.classList.remove('hidden');
+  refreshInstallBanner();
   $('welcomeName').textContent = `Ciao, ${data.firstName}`;
   $('memberName').textContent = `${data.firstName} ${data.lastName}`;
   $('cardCode').textContent = data.cardCode;
@@ -656,6 +659,7 @@ $('confirmConsentUpdate').addEventListener('click', async () => {
     );
 
     $('consentUpdateModal').classList.add('hidden');
+    refreshInstallBanner();
 
   } catch (err) {
     console.error('Errore salvataggio consensi:', err);
@@ -816,7 +820,7 @@ if ('serviceWorker' in navigator) window.addEventListener('load', () => navigato
 
 
 /* =========================================================
-   INSTALLAZIONE PWA / AREA V.I.P.
+   INSTALLAZIONE FACOLTATIVA / V.I.P. CARD
 ========================================================= */
 let deferredInstallPrompt = null;
 
@@ -835,7 +839,9 @@ function refreshInstallBanner() {
   const help = $('installHelp');
   if (!banner || !btn || !help) return;
 
-  if (isStandaloneMode()) {
+  const hasVisibleCard = Boolean(currentCard?.cardCode) && !cardView.classList.contains('hidden');
+  const consentPending = !$('consentUpdateModal')?.classList.contains('hidden');
+  if (!hasVisibleCard || consentPending || isStandaloneMode()) {
     banner.classList.add('hidden');
     return;
   }
@@ -844,21 +850,21 @@ function refreshInstallBanner() {
 
   if (deferredInstallPrompt) {
     btn.disabled = false;
-    btn.textContent = 'SCARICA LA TUA V.I.P. CARD';
-    help.textContent = 'Installa AREA V.I.P. sul telefono e aprila come una vera app.';
+    btn.textContent = 'INSTALLA L’APP';
+    help.textContent = 'La tessera è già disponibile. Puoi installare l’app per aprirla dalla schermata Home, oppure continuare dal browser.';
     return;
   }
 
   if (isIOSDevice()) {
     btn.disabled = false;
-    btn.textContent = 'COME INSTALLARLA SU IPHONE';
-    help.textContent = 'Su iPhone apri questa pagina in Safari, tocca Condividi e scegli “Aggiungi alla schermata Home”.';
+    btn.textContent = 'INSTALLA L’APP SU IPHONE';
+    help.textContent = 'Installazione facoltativa: apri questa pagina in Safari, tocca Condividi e scegli “Aggiungi alla schermata Home”.';
     return;
   }
 
   btn.disabled = false;
-  btn.textContent = 'SCARICA LA TUA V.I.P. CARD';
-  help.textContent = 'Se il telefono non mostra l’installazione automatica, apri il menu del browser e scegli “Installa app” o “Aggiungi a schermata Home”.';
+  btn.textContent = 'INSTALLA L’APP';
+  help.textContent = 'La tessera è già disponibile. Per installare l’app, apri il menu del browser e cerca “Installa app” o “Aggiungi a schermata Home”. Puoi anche continuare dal browser.';
 }
 
 window.addEventListener('beforeinstallprompt', event => {
@@ -875,6 +881,7 @@ window.addEventListener('appinstalled', () => {
 window.addEventListener('load', refreshInstallBanner);
 
 $('installAppBtn')?.addEventListener('click', async () => {
+  if (!currentCard?.cardCode || cardView.classList.contains('hidden') || !$('consentUpdateModal')?.classList.contains('hidden')) return;
   if (deferredInstallPrompt) {
     deferredInstallPrompt.prompt();
     try {

@@ -34,9 +34,9 @@ self.addEventListener('notificationclick', event => {
     clients.openWindow(url)
   );
 });
-const CACHE = 'vip-card-v6-2-1-consent-fix';
+const CACHE = 'vip-card-v6-2-2-registration-first';
 const ASSETS = [
-  './', './index.html', './styles.css', './app.js', './manifest.webmanifest', './privacy.html',
+  './', './index.html', './styles.css?v=6.2.2', './app.js?v=6.2.2', './manifest.webmanifest', './privacy.html',
   './assets/logo-vip.png', './assets/icon-192.png', './assets/icon-512.png', './assets/federica-avatar.webp?v=3',
   './admin.html', './admin.js'
 ];
