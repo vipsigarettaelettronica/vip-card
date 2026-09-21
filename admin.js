@@ -149,7 +149,13 @@ function openDetail(id) {
   $('detailReview').textContent = c.reviewDone === true ? 'Effettuata ✓' : 'Non effettuata';
   $('toggleReview').textContent = c.reviewDone === true ? 'ANNULLA SPUNTA RECENSIONE' : 'SEGNA RECENSIONE EFFETTUATA ✓';
   $('toggleDanea').textContent = c.daneaLinked === true ? 'SEGNA COME NON ASSOCIATA' : 'SEGNA ASSOCIATA A DANEA';
+  $('personalMessageRecipient').textContent = `${fullName(c)} · ${c.cardCode}`;
+  $('personalMessageForm').reset();
+  $('personalMessageStatus').textContent = '';
+  $('personalMessageHistory').textContent = 'Caricamento...';
   $('customerModal').classList.remove('hidden');
+  loadPersonalMessages(c);
+
 }
 
 async function toggleDanea() {
@@ -438,4 +444,80 @@ onAuthStateChanged(auth, async user => {
   $('loginError').textContent = '';
   await loadCards();
   await loadAdminMessages();
+});
+
+// Personal inboxes never share the publicly readable /messages collection.
+async function loadPersonalMessages(customer) {
+  const ownerUid = customer.id;
+  try {
+    const [messages, reads] = await Promise.all([
+      getDocs(collection(db, 'personalInboxes', ownerUid, 'messages')),
+      getDocs(collection(db, 'personalInboxes', ownerUid, 'reads'))
+    ]);
+    if (selectedCard?.id !== ownerUid) return;
+    const receipts = new Map(reads.docs.map(d => [d.id, d.data()]));
+    const items = messages.docs.map(d => ({ id: d.id, ...d.data() }))
+      .sort((a, b) => adminMessageDate(b) - adminMessageDate(a));
+    $('personalMessageHistory').innerHTML = items.length ? items.map(m => `
+      <article class="admin-message-row">
+        <div class="admin-message-main">
+          <strong>${escapeHtml(m.title)}</strong><p>${escapeHtml(m.body)}</p>
+          <small>${escapeHtml(formatTimestamp(m.publishedAt))}</small>
+          <p>${receipts.has(m.id) ? 'Letto · ' + escapeHtml(formatTimestamp(receipts.get(m.id).readAt)) : 'Non ancora letto'}</p>
+        </div>
+        <button type="button" class="danger compact delete-personal-message" data-id="${escapeHtml(m.id)}">ELIMINA</button>
+      </article>`).join('') : '<p>Nessun messaggio personale per questo cliente.</p>';
+    $('personalMessageHistory').querySelectorAll('.delete-personal-message').forEach(button => {
+      button.addEventListener('click', async () => {
+        if (!confirm(`Eliminare questo messaggio personale per ${fullName(customer)}?`)) return;
+        button.disabled = true;
+        try {
+          await deleteDoc(doc(db, 'personalInboxes', ownerUid, 'messages', button.dataset.id));
+          await loadPersonalMessages(customer);
+        } catch (err) {
+          if (selectedCard?.id === ownerUid) $('personalMessageStatus').textContent = 'Eliminazione non riuscita.';
+          button.disabled = false;
+        }
+      });
+    });
+  } catch (err) {
+    console.error('Storico personale:', err);
+    if (selectedCard?.id === ownerUid) $('personalMessageHistory').textContent = 'Storico non disponibile. Verifica che il servizio messaggi personali sia stato attivato.';
+  }
+}
+
+let personalSendPending = false;
+$('personalMessageForm').addEventListener('submit', async event => {
+  event.preventDefault();
+  if (personalSendPending || !selectedCard || !isAdmin(auth.currentUser)) return;
+  // Capture the recipient before any asynchronous work or a change of selection.
+  const customer = { ...selectedCard };
+  const title = clean($('personalMessageTitle').value);
+  const body = clean($('personalMessageBody').value);
+  if (!title || !body || title.length > 80 || body.length > 500) {
+    $('personalMessageStatus').textContent = 'Inserisci titolo e messaggio.';
+    return;
+  }
+  if (!confirm(`Inviare il messaggio soltanto a ${fullName(customer)} (${customer.cardCode})?`)) return;
+  personalSendPending = true;
+  $('sendPersonalMessage').disabled = true;
+  $('personalMessageStatus').textContent = 'Salvataggio...';
+  try {
+    const ref = doc(collection(db, 'personalInboxes', customer.id, 'messages'));
+    await setDoc(ref, { title, body, active: true, publishedAt: serverTimestamp() });
+    if (selectedCard?.id === customer.id) {
+      $('personalMessageForm').reset();
+      $('personalMessageStatus').textContent = 'Messaggio personale salvato nell’app del cliente. Invio push non ancora disponibile da questa gestione.';
+      await loadPersonalMessages(customer);
+    }
+  } catch (err) {
+    console.error('Invio personale:', err);
+    if (selectedCard?.id === customer.id) $('personalMessageStatus').textContent = 'Salvataggio non riuscito. Il messaggio non è stato confermato.';
+  } finally {
+    personalSendPending = false;
+    $('sendPersonalMessage').disabled = false;
+  }
+});
+$('refreshPersonalMessages').addEventListener('click', () => {
+  if (selectedCard) loadPersonalMessages({ ...selectedCard });
 });

@@ -2376,3 +2376,12 @@ button:active {
     min-width: 0;
   }
 }
+
+/* Personal messages in the customer detail panel. */
+.personal-message-panel { margin-top: 24px; padding-top: 20px; border-top: 1px solid #bba35b; text-align: left; }
+.personal-message-panel form { display: grid; gap: 14px; }
+.personal-message-panel label { display: grid; gap: 6px; }
+.personal-message-panel input, .personal-message-panel textarea { box-sizing: border-box; width: 100%; max-width: 100%; }
+.personal-message-panel textarea { min-height: 110px; resize: vertical; }
+.personal-message-panel p, .personal-message-panel strong { overflow-wrap: anywhere; }
+.personal-message-panel .admin-message-row { margin-top: 14px; }

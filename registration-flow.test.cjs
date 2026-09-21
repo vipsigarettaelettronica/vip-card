@@ -19,14 +19,16 @@ function setup() {
     return elements.get(id);
   }
   const storage = new Map();
-  const ctx = vm.createContext({ console, Date, Uint8Array, URL,
+  const ctx = vm.createContext({ console, Date, Uint8Array, URL, setTimeout, clearTimeout,
+    requestAnimationFrame: fn => fn(), isSupported: async () => false,
     document: { getElementById: element, createElementNS: () => element('svgRect') },
     window: { addEventListener: (name, fn) => { events[name] = fn; }, matchMedia: () => ({ matches: false }), navigator: {} },
     navigator: { userAgent: 'Test desktop browser' },
     localStorage: { getItem: key => storage.get(key) || null, setItem: (key, value) => storage.set(key, value) },
     initializeApp: () => ({}), getAuth: () => ({}), getFirestore: () => ({}),
     onAuthStateChanged: () => () => {}, signInAnonymously: async () => ({}),
-    collection: () => ({}), doc: () => ({}), getDocs: async () => ({ docs: [] }),
+    collection: (_, ...parts) => parts.join('/'), doc: (_, ...parts) => parts.join('/'),
+    onSnapshot: (_, next) => { next({docs: []}); return () => {}; }, getDocs: async () => ({ docs: [] }),
     getDoc: async () => ({ exists: () => false }), setDoc: async () => {}, serverTimestamp: () => 'test-time',
     alert() {} });
   vm.runInContext(source, ctx);
@@ -97,4 +99,66 @@ test('a rejected server write keeps confirmation open and does not cache accepta
   assert.match(s.element('consentUpdateError').textContent, /CONSENSO-01/);
   assert.equal(s.run('currentCard.privacyVersion'), 'old');
   assert.equal(s.element('confirmConsentUpdate').disabled, false);
+});
+
+test('personal inbox permission failure does not hide general messages', async () => {
+  const s = setup();
+  s.run(`currentUser = {uid:'alice'}; currentCard = {...${JSON.stringify(card)}, ownerUid:'alice'};`);
+  s.ctx.onSnapshot = (ref, next, fail) => {
+    if (ref === 'messages') next({docs:[{id:'general',data:()=>({title:'Orari',body:'Aperti',publishedAt:{toDate:()=>new Date()}})}]});
+    else if (ref.endsWith('/messages')) fail({code:'permission-denied'});
+    else next({docs:[]});
+    return () => {};
+  };
+  await s.run('loadMessages()');
+  assert.match(s.element('messagePreview').innerHTML, /Orari/);
+  assert.match(s.element('personalInboxStatus').textContent, /non disponibili/);
+});
+test('recovered card verifies access before subscribing to its personal inbox', async () => {
+  const s = setup();
+  s.run(`currentUser = {uid:'device'}; currentCard = {...${JSON.stringify(card)}, ownerUid:'alice'}; currentRecoveryCode='secret';`);
+  const writes = [], subscriptions = [];
+  s.ctx.setDoc = async (ref, value) => { writes.push({ref, value}); };
+  s.ctx.onSnapshot = (ref, next) => { subscriptions.push(ref); next({docs:[]}); return () => {}; };
+  await s.run('loadMessages()');
+  assert.equal(writes[0].ref, 'cardMessageAccess/device');
+  assert.equal(writes[0].value.ownerUid, 'alice');
+  assert.equal(writes[0].value.recoveryCode, 'secret');
+  assert.ok(subscriptions.includes('personalInboxes/alice/messages'));
+  subscriptions.length = 0;
+  s.ctx.setDoc = async () => { throw {code:'permission-denied'}; };
+  await s.run('loadMessages()');
+  assert.deepEqual(subscriptions, ['messages']);
+});
+test('personal messages are escaped and their read receipts never use the public messageReads collection', async () => {
+  const s = setup();
+  s.run(`currentUser={uid:'alice'}; currentCard=${JSON.stringify(card)}; currentRecoveryCode='secret';`);
+  await s.run(`renderMessages([{id:'p1',ownerUid:'alice',personal:true,title:'<script>bad</script>',body:'<img src=x>',publishedAt:{toDate:()=>new Date()}}])`);
+  assert.match(s.element('messagesList').innerHTML, /&lt;script&gt;/);
+  assert.doesNotMatch(s.element('messagesList').innerHTML, /<script>/);
+  const paths = [];
+  s.ctx.setDoc = async ref => { paths.push(ref); };
+  await s.run(`markMessagesRead([{id:'p1',ownerUid:'alice',personal:true}])`);
+  assert.deepEqual(paths, ['personalInboxes/alice/reads/p1']);
+});
+test('a granted notification permission silently repairs device registration; network errors do not claim permission was revoked', async () => {
+  const s = setup();
+  s.run(`currentUser={uid:'alice'}; currentCard=${JSON.stringify(card)};`);
+  let prompts = 0;
+  s.ctx.Notification = {permission:'granted',requestPermission:async()=>{prompts++;return 'granted';}};
+  s.ctx.isSupported = async () => true;
+  s.ctx.navigator.serviceWorker = {register:async()=>({}),ready:Promise.resolve({})};
+  s.ctx.getMessaging = () => ({});
+  s.ctx.getToken = async () => 'fresh-token';
+  const writes = [];
+  s.ctx.setDoc = async (ref,data) => { writes.push({ref,data}); };
+  await s.run('refreshNotificationRegistration(false)');
+  assert.equal(prompts, 0);
+  assert.equal(writes[0].data.token, 'fresh-token');
+  assert.equal(writes[0].ref, 'pushSubscriptions/alice');
+  assert.match(s.element('enableNotifications').textContent, /ATTIVI/);
+  s.ctx.setDoc = async () => {throw new Error('offline');};
+  await s.run('refreshNotificationRegistration(false)');
+  assert.match(s.element('notificationStatus').textContent, /non significa/);
+  assert.equal(s.element('enableNotifications').disabled, false);
 });

@@ -1,6 +1,6 @@
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
 import { getAuth, onAuthStateChanged, signInAnonymously } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
-import { getFirestore, collection, doc, getDoc, getDocs, setDoc, updateDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+import { getFirestore, collection, doc, getDoc, setDoc, updateDoc, serverTimestamp, onSnapshot } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 import { getMessaging, getToken, isSupported } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging.js';
 const firebaseConfig = {
   apiKey: 'AIzaSyD-q497X-cHUezvOBL_TKc3L8sHmNQOLDs',
@@ -228,6 +228,12 @@ async function markMessagesRead(messages) {
 
   try {
     await Promise.all(messages.map(async m => {
+      if (m.personal) {
+        await setDoc(doc(db, 'personalInboxes', m.ownerUid, 'reads', m.id), {
+          viewerUid: currentUser.uid, readAt: serverTimestamp()
+        });
+        return;
+      }
       const readId = `${m.id}__${safeCardCode}`;
 
       await setDoc(
@@ -249,7 +255,7 @@ async function markMessagesRead(messages) {
   }
 }
 
-async function loadMessages() {
+async function renderMessages(messages) {
   const preview = $('messagePreview');
   const list = $('messagesList');
   const badge = $('messageBadge');
@@ -257,9 +263,7 @@ async function loadMessages() {
   if (!preview || !list || !badge || !toggle) return;
 
   try {
-    const snap = await getDocs(collection(db, 'messages'));
-    const newestFirst = snap.docs
-      .map(d => ({ id: d.id, ...d.data() }))
+    const newestFirst = messages
       .filter(m => m.active !== false)
       .sort((a,b) => messageDate(b) - messageDate(a));
 
@@ -268,7 +272,8 @@ async function loadMessages() {
       : 'vipMessagesSeen';
 
     const lastSeen = Number(localStorage.getItem(lastSeenKey) || 0);
-    const unread = newestFirst.filter(m => messageDate(m).getTime() > lastSeen).length;
+    const unread = newestFirst.filter(m => m.personal ? !personalReadIds.has(m.id) : messageDate(m).getTime() > lastSeen).length;
+    updateAppBadge(unread);
 
     badge.textContent = String(unread);
     badge.classList.toggle('hidden', unread < 1);
@@ -311,7 +316,7 @@ async function loadMessages() {
         ${separator}
         <article class="sms-row">
           <div class="sms-bubble">
-            <span class="sms-sender">V.I.P.</span>
+            <span class="sms-sender">${m.personal ? 'V.I.P. · Messaggio personale' : 'V.I.P. · Comunicazione a tutti'}</span>
             <strong>${escapeText(m.title || 'Comunicazione V.I.P.')}</strong>
             <p>${escapeText(m.body || '')}</p>
             <time>${messageTimeLabel(d)}</time>
@@ -329,6 +334,7 @@ async function loadMessages() {
       if (opening) {
         localStorage.setItem(lastSeenKey, String(Date.now()));
         badge.classList.add('hidden');
+        updateAppBadge(0);
 
         requestAnimationFrame(() => {
           list.scrollTop = list.scrollHeight;
@@ -340,6 +346,76 @@ async function loadMessages() {
   } catch (err) {
     console.warn('Comunicazioni non disponibili:', err);
     preview.innerHTML = '<p class="dashboard-copy">Le comunicazioni non sono disponibili in questo momento.</p>';
+  }
+}
+
+let messageUnsubscribers = [];
+let messageLoadGeneration = 0;
+let personalReadIds = new Set();
+
+function updateAppBadge(count) {
+  // Unsupported systems keep using the unread counter inside the app.
+  try {
+    const result = count > 0 ? navigator.setAppBadge?.(count) : navigator.clearAppBadge?.();
+    result?.catch(() => {});
+  } catch {}
+}
+
+async function loadMessages() {
+  const generation = ++messageLoadGeneration;
+  messageUnsubscribers.forEach(unsubscribe => unsubscribe());
+  messageUnsubscribers = [];
+  personalReadIds = new Set();
+  let general = [], personal = [];
+  $('generalMessageStatus').textContent = '';
+  $('personalInboxStatus').textContent = '';
+  renderMessages([]);
+  const ownerUid = currentCard?.ownerUid;
+  const render = () => {
+    if (generation === messageLoadGeneration) renderMessages([...general, ...personal]);
+  };
+  messageUnsubscribers.push(onSnapshot(collection(db, 'messages'), snapshot => {
+    if (generation !== messageLoadGeneration) return;
+    $('generalMessageStatus').textContent = '';
+    general = snapshot.docs.map(d => ({ ...d.data(), id: d.id, personal: false }));
+    render();
+  }, error => {
+    console.warn('Comunicazioni generali:', error);
+    if (generation === messageLoadGeneration) $('generalMessageStatus').textContent = 'Comunicazioni generali temporaneamente non disponibili.';
+  }));
+  if (!ownerUid || !currentUser) return;
+  try {
+    if (ownerUid !== currentUser.uid) {
+      if (!currentRecoveryCode) throw new Error('Recupero tessera necessario');
+      await setDoc(doc(db, 'cardMessageAccess', currentUser.uid), {
+        ownerUid, recoveryCode: currentRecoveryCode, cardCode: currentCard.cardCode
+      });
+    }
+    if (generation !== messageLoadGeneration) return;
+    messageUnsubscribers.push(onSnapshot(collection(db, 'personalInboxes', ownerUid, 'messages'), snapshot => {
+      if (generation !== messageLoadGeneration) return;
+      personal = snapshot.docs.map(d => ({ ...d.data(), id: d.id, ownerUid, personal: true }));
+      $('personalInboxStatus').textContent = '';
+      render();
+    }, error => {
+      console.warn('Messaggi personali:', error);
+      if (generation !== messageLoadGeneration) return;
+      personal = [];
+      $('personalInboxStatus').textContent = 'Messaggi personali temporaneamente non disponibili. Riapri l’app per riprovare.';
+      render();
+    }));
+    messageUnsubscribers.push(onSnapshot(collection(db, 'personalInboxes', ownerUid, 'reads'), snapshot => {
+      if (generation !== messageLoadGeneration) return;
+      personalReadIds = new Set(snapshot.docs.map(d => d.id));
+      render();
+    }, error => {
+      console.warn('Letture personali:', error);
+    }));
+  } catch (error) {
+    console.warn('Collegamento messaggi personali:', error);
+    if (generation === messageLoadGeneration) $('personalInboxStatus').textContent = error?.code === 'permission-denied'
+      ? 'Collegamento ai messaggi personali non autorizzato. Verifica il codice di recupero con V.I.P.'
+      : 'Messaggi personali temporaneamente non disponibili. Controlla la connessione e riapri l’app.';
   }
 }
 
@@ -360,27 +436,7 @@ function showRecovery() {
 async function showCard(data, recoveryCode='', recovered=false) {
   currentCard = data;
   currentRecoveryCode = recoveryCode || data.recoveryKey || '';
-  const notificationBtn = $('enableNotifications');
-const notificationStatus = $('notificationStatus');
-
-try {
-  if ('Notification' in window && Notification.permission === 'granted' && currentUser) {
-    const pushSnap = await getDoc(doc(db, 'pushSubscriptions', currentUser.uid));
-
-    if (pushSnap.exists() && pushSnap.data().enabled === true) {
-      notificationBtn.textContent = 'AVVISI V.I.P. ATTIVI ✓';
-      notificationStatus.textContent = 'Riceverai avvisi V.I.P. su orari speciali, chiusure e comunicazioni utili.';
-    } else {
-      notificationBtn.textContent = 'ATTIVA AVVISI V.I.P.';
-      notificationStatus.textContent = 'RICEVI AVVISI SU ORARI SPECIALI, EVENTI E V.I.P. BIRTHDAY.';
-    }
-  } else {
-    notificationBtn.textContent = 'ATTIVA AVVISI V.I.P.';
-    notificationStatus.textContent = 'RICEVI AVVISI SU ORARI SPECIALI, EVENTI E V.I.P. BIRTHDAY.';
-  }
-} catch (err) {
-  console.error('Controllo stato notifiche:', err);
-}
+  refreshNotificationRegistration(false);
   let privacyIsCurrent =
     data.privacyConsent === true &&
     data.privacyVersion === CURRENT_PRIVACY_VERSION;
@@ -765,66 +821,61 @@ ensureAnonymousSession().catch(err => {
   console.error(err);
   $('formError').textContent = 'Connessione al servizio tessere non disponibile. Ricarica la pagina.';
 });
-$('enableNotifications').addEventListener('click', async () => {
+let notificationRefreshPending = false;
+async function refreshNotificationRegistration(askPermission = false) {
   const btn = $('enableNotifications');
   const status = $('notificationStatus');
-
+  if (notificationRefreshPending || !currentUser || !currentCard) return;
+  notificationRefreshPending = true;
+  const userUid = currentUser.uid;
+  const card = { ...currentCard };
+  btn.disabled = true;
   try {
-    btn.disabled = true;
-
-    if (!currentUser || !currentCard) {
-      throw new Error('Tessera non disponibile');
-    }
-
     if (!(await isSupported())) {
-      status.textContent = 'Le notifiche non sono supportate su questo dispositivo.';
+      btn.textContent = 'AVVISI NON DISPONIBILI';
+      status.textContent = 'Questo browser non supporta le notifiche. Su iPhone prova dall’app aggiunta alla schermata Home.';
       return;
     }
-
-    const permission = await Notification.requestPermission();
-
+    const permission = askPermission ? await Notification.requestPermission() : Notification.permission;
     if (permission !== 'granted') {
-      status.textContent = 'Notifiche non attivate. Puoi abilitarle dalle impostazioni del browser.';
+      btn.textContent = 'ATTIVA AVVISI V.I.P.';
+      status.textContent = permission === 'denied'
+        ? 'Le notifiche sono bloccate nelle impostazioni del dispositivo o del browser.'
+        : 'Consenti le notifiche per ricevere gli avvisi sul telefono.';
       return;
     }
-
-    const registration = await navigator.serviceWorker.ready;
-    const messaging = getMessaging(firebaseApp);
-
-    const token = await getToken(messaging, {
-      vapidKey: VAPID_KEY,
-      serviceWorkerRegistration: registration
-    });
-
-    if (!token) {
-      throw new Error('Token notifiche non disponibile');
-    }
-
-    await setDoc(
-      doc(db, 'pushSubscriptions', currentUser.uid),
-      {
-        ownerUid: currentUser.uid,
-        cardCode: currentCard.cardCode,
-        firstName: currentCard.firstName || '',
-        lastName: currentCard.lastName || '',
-        token: token,
-        marketingConsent: currentCard.marketingConsent === true,
-        enabled: true,
-        updatedAt: serverTimestamp()
-      },
-      { merge: true }
-    );
-
+    btn.textContent = 'VERIFICA AVVISI...';
+    const registration = await navigator.serviceWorker.register('./sw.js');
+    // Wait for an active worker, with a bound instead of leaving the button disabled forever.
+    let timeout;
+    try {
+      await Promise.race([
+        navigator.serviceWorker.ready,
+        new Promise((_, reject) => { timeout = setTimeout(() => reject(new Error('Service worker non pronto')), 15000); })
+      ]);
+    } finally { clearTimeout(timeout); }
+    const token = await getToken(getMessaging(firebaseApp), { vapidKey: VAPID_KEY, serviceWorkerRegistration: registration });
+    if (!token) throw new Error('Token notifiche non disponibile');
+    await setDoc(doc(db, 'pushSubscriptions', userUid), {
+      ownerUid: userUid, cardCode: card.cardCode,
+      firstName: card.firstName || '', lastName: card.lastName || '',
+      token, marketingConsent: card.marketingConsent === true,
+      enabled: true, updatedAt: serverTimestamp()
+    }, { merge: true });
+    if (currentUser?.uid !== userUid || currentCard?.cardCode !== card.cardCode) return;
     btn.textContent = 'AVVISI V.I.P. ATTIVI ✓';
-    status.textContent = 'Riceverai avvisi V.I.P. su orari speciali, chiusure e comunicazioni utili.';
-
-  } catch (err) {
-    console.error('Errore notifiche:', err);
-    status.textContent = 'Non è stato possibile attivare gli avvisi. Riprova.';
+    status.textContent = 'Questo dispositivo è registrato per ricevere le notifiche V.I.P.';
+  } catch (error) {
+    console.warn('Registrazione avvisi:', error);
+    btn.textContent = 'RIPROVA COLLEGAMENTO AVVISI';
+    status.textContent = 'Non riesco a verificare il collegamento alle notifiche. Questo non significa che tu abbia tolto il permesso.';
   } finally {
+    notificationRefreshPending = false;
     btn.disabled = false;
   }
-});
+}
+$('enableNotifications').addEventListener('click', () => refreshNotificationRegistration(true));
+window.addEventListener('online', () => refreshNotificationRegistration(false));
 if ('serviceWorker' in navigator) window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(() => {}));
 
 
