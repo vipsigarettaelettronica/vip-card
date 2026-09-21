@@ -1,2 +1,2 @@
-// Set only after the trusted sender has been deployed and verified.
-export const PUSH_ENDPOINT = '';
+// Production sender; Firebase admin authentication required.
+export const PUSH_ENDPOINT = 'https://vip-card-notifications.vipsigarettaelettronica.workers.dev/send';
