@@ -11,9 +11,9 @@
 
 ## Required deployment sequence — not performed
 
-1. Read and back up the complete current live Firestore rules. The repository's `firestore-rules-v5.txt` is older than the current live consent rules and MUST NOT replace them.
-2. Merge `personal-messages.rules.inc` inside the live `match /databases/{database}/documents` block. Confirm that no broader existing wildcard grants access to these new paths. Keep all existing consent/card protections.
-3. Re-run rule tests against the combined rules, then deploy the additive rules after the owner's release approval.
+1. The complete live rules were read from Firebase Console and saved in `firestore-rules-before-personal-20260921.rules`. Before deployment, verify they have not changed since this snapshot. The older `firestore-rules-v5.txt` MUST NOT replace the live rules.
+2. `firestore.rules` contains that live snapshot plus `personal-messages.rules.inc`. No existing wildcard grants access to these new paths; existing consent/card protections are preserved.
+3. The emulator tests run against the complete combined `firestore.rules`. Deploy these rules only after the owner's release approval; reconcile and re-test first if live rules have changed.
 4. Merge this branch to the Pages release branch after approval. Versioned client/admin/style URLs and service worker cache version move to 6.3.0.
 5. Test with controlled owner and recovered test cards: send one explicitly authorized test message, verify only its intended recipient can see it, open it and check the receipt. Do not send test broadcasts to real customers.
 
@@ -28,7 +28,7 @@ The current Firebase console uses the Spark plan. Decide on a trusted sender dep
 ## Verification
 
 - `node --test registration-flow.test.cjs tests/admin-personal-messages.test.cjs`: 12 passing tests, including existing registration/consent behavior, message escaping, private receipt routing, public-message fallback, device registration recovery and captured-recipient handling.
-- `npm run test:messages`: 4 passing Firestore Emulator scenarios. Covers owner/admin access, cross-customer and anonymous denial, collection query denial, forged recovery record denial, recovery-secret rotation/revocation and receipt validation.
+- `npm run test:messages`: 4 passing Firestore Emulator scenarios against the complete combined live rules. Covers owner/admin access, cross-customer and anonymous denial, collection query denial, forged recovery record denial, recovery-secret rotation/revocation and receipt validation.
 - Syntax checks: app.js, admin.js, sw.js.
 - No live rules changed, no Pages release, no real customer message sent.
 

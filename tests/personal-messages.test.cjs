@@ -6,12 +6,7 @@ let env;
 const payload = () => ({title: 'Riservato', body: 'Messaggio di prova', active: true, publishedAt: serverTimestamp()});
 const message = db => doc(db, 'personalInboxes', 'alice', 'messages', 'first');
 before(async () => {
-  // The module is additive; wrap it in the same signedIn/isAdmin helpers as production.
-  const rules = `rules_version = '2'; service cloud.firestore { match /databases/{database}/documents {
-    function signedIn() { return request.auth != null; }
-    function isAdmin() { return signedIn() && request.auth.token.email == 'vipsigarettaelettronica@gmail.com'; }
-    ${readFileSync('personal-messages.rules.inc', 'utf8')}
-  } }`;
+  const rules = readFileSync('firestore.rules', 'utf8');
   env = await initializeTestEnvironment({projectId: 'demo-vip-messages', firestore: {rules}});
 });
 after(async () => { if (env) await env.cleanup(); });
