@@ -768,6 +768,7 @@ if (!$('regulationConsent').checked) { $('formError').textContent = 'Devi accett
       phone: $('phone').value.trim(),
       email: $('email').value.trim(),
       birthDate: $('birthDate').value,
+      adminGender: ['female', 'male', 'other'].includes($('gender').value) ? $('gender').value : 'unknown',
       privacyConsent: true,
 privacyVersion: '2026-09-v4',
 

@@ -163,3 +163,18 @@ test('a granted notification permission silently repairs device registration; ne
   assert.match(s.element('notificationStatus').textContent, /non significa/);
   assert.equal(s.element('enableNotifications').disabled, false);
 });
+
+test('registration saves optional gender in the field used by admin filters, without exposing it in recovery records', async () => {
+  for (const [choice, expected] of [['female','female'],['male','male'],['other','other'],['unknown','unknown'],['','unknown'],['invalid','unknown']]) {
+    const s=setup();const writes=[];
+    s.run("currentUser={uid:'new-card'}; randomRecoveryCode=()=> 'RCV-TEST'; randomCode=()=> 'VIP-TEST'; showCard=()=>{}; validateBirthDate=()=>true;");
+    s.element('registrationForm').reportValidity=()=>true;
+    s.element('registrationForm').querySelector=()=>({disabled:false,textContent:''});
+    for(const [id,value] of Object.entries({firstName:'Alice',lastName:'Test',phone:'3331234567',email:'',birthDate:'1990-01-01',gender:choice})) s.element(id).value=value;
+    s.element('privacyConsent').checked=true;s.element('regulationConsent').checked=true;s.element('marketingConsent').checked=false;
+    s.ctx.setDoc=async(ref,data)=>writes.push({ref,data});
+    await s.element('registrationForm').handlers.submit({preventDefault(){}});
+    const saved=writes.find(x=>x.ref==='cards/new-card');assert.ok(saved,choice);assert.equal(saved.data.adminGender,expected);assert.equal(saved.data.marketingConsent,false);
+    const recovery=writes.find(x=>x.ref.startsWith('recoveries/'));assert.ok(recovery);assert.equal('adminGender' in recovery.data,false);
+  }
+});

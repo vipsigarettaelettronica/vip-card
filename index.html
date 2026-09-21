@@ -80,6 +80,17 @@
           <input id="birthDate" name="birthDate" type="date" autocomplete="bday" required>
         </label>
 
+        <label>
+          Genere <span class="optional">(facoltativo)</span>
+          <select id="gender" name="gender" aria-describedby="genderHelp">
+            <option value="unknown">Preferisco non indicarlo</option>
+            <option value="female">Donna</option>
+            <option value="male">Uomo</option>
+            <option value="other">Altro</option>
+          </select>
+        </label>
+        <p id="genderHelp" class="muted-line">Questo campo non è obbligatorio. Se lo indichi, ci aiuti a personalizzare le comunicazioni; le promozioni restano soggette al tuo consenso marketing.</p>
+
         <div id="ageNotice" class="notice" aria-live="polite"></div>
 
       <label class="check-row">
@@ -342,7 +353,7 @@
     </div>
   </div>
 
-<script type="module" src="app.js?v=6.4.0"></script>
+<script type="module" src="app.js?v=6.5.1"></script>
 </body>
 </html>
 
