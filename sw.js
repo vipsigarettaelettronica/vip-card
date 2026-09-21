@@ -61,11 +61,11 @@ self.addEventListener('message', event => {
   if(event.data?.type === 'VIP_BADGE') event.waitUntil(queuePushWork(null,event.data.count));
   if(event.data?.type === 'VIP_FOREGROUND_PUSH') event.waitUntil(queuePushWork(event.data.payload));
 });
-const CACHE = 'vip-card-v6-5-1-registration-gender';
+const CACHE = 'vip-card-v6-5-2-admin-icon';
 const ASSETS = [
   './', './index.html', './styles.css?v=6.4.0', './app.js?v=6.5.1', './manifest.webmanifest', './privacy.html',
   './assets/notification-badge-large.png', './assets/logo-vip.png', './assets/icon-192.png', './assets/icon-512.png', './assets/federica-avatar.webp?v=3',
-  './customer-groups.js?v=6.5.0', './styles.css?v=6.5.0', './admin.html', './admin.js?v=6.5.0', './push-client.js?v=6.4.0', './push-config.js?v=6.4.0'
+  './customer-groups.js?v=6.5.0', './styles.css?v=6.5.0', './assets/admin-icon.png?v=1', './admin.html', './admin.js?v=6.5.0', './push-client.js?v=6.4.0', './push-config.js?v=6.4.0'
 ];
 self.addEventListener('install', event => {
   self.skipWaiting();
