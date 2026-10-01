@@ -223,6 +223,92 @@ async function resetRecovery() {
   finally { btn.disabled = false; }
 }
 
+async function deleteCustomerCard() {
+  if (!selectedCard || !isAdmin(auth.currentUser)) return;
+
+  const card = { ...selectedCard };
+  const customerName = fullName(card) || 'Cliente';
+  const code = clean(card.cardCode) || 'codice non disponibile';
+
+  const confirmed = confirm(
+    `Eliminare definitivamente l'iscrizione di ${customerName}?\n\nTessera: ${code}\n\nVerranno rimossi anche il codice di recupero, le notifiche e i messaggi personali collegati. L'operazione non può essere annullata.`
+  );
+  if (!confirmed) return;
+
+  const btn = $('deleteCustomerCard');
+  btn.disabled = true;
+  const originalText = btn.textContent;
+  btn.textContent = 'ELIMINAZIONE...';
+
+  const cleanupWarnings = [];
+  const cleanup = async (label, task) => {
+    try { await task(); }
+    catch (err) {
+      console.warn(`Pulizia ${label} non completata:`, err);
+      cleanupWarnings.push(label);
+    }
+  };
+
+  try {
+    if (card.recoveryKey) {
+      await cleanup('codice di recupero', () => deleteDoc(doc(db, 'recoveries', card.recoveryKey)));
+      await cleanup('consensi', () => deleteDoc(doc(db, 'consentAcceptances', card.recoveryKey)));
+    }
+
+    await cleanup('notifiche', async () => {
+      const snap = await getDocs(collection(db, 'pushSubscriptions'));
+      for (const item of snap.docs) {
+        const data = item.data();
+        if (
+          clean(data.cardCode) === clean(card.cardCode) ||
+          clean(data.ownerUid) === clean(card.id)
+        ) {
+          await deleteDoc(item.ref);
+        }
+      }
+    });
+
+    await cleanup('messaggi personali', async () => {
+      for (const subcollection of ['messages', 'reads']) {
+        const snap = await getDocs(collection(db, 'personalInboxes', card.id, subcollection));
+        for (const item of snap.docs) await deleteDoc(item.ref);
+      }
+    });
+
+    await cleanup('letture comunicazioni', async () => {
+      const snap = await getDocs(collection(db, 'messageReads'));
+      for (const item of snap.docs) {
+        if (clean(item.data().cardCode) === clean(card.cardCode)) {
+          await deleteDoc(item.ref);
+        }
+      }
+    });
+
+    // La tessera viene eliminata per ultima: finché questo passaggio non riesce
+    // il cliente resta visibile nel gestionale e l'operazione può essere riprovata.
+    await deleteDoc(doc(db, 'cards', card.id));
+
+    selectedCustomers.delete(card.id);
+    allCards = allCards.filter(c => c.id !== card.id);
+    selectedCard = null;
+    $('customerModal').classList.add('hidden');
+    render();
+    await loadAdminMessages();
+
+    alert(
+      cleanupWarnings.length
+        ? `Iscrizione ${code} eliminata. Alcuni dati accessori non sono stati rimossi automaticamente: ${cleanupWarnings.join(', ')}.`
+        : `Iscrizione ${code} eliminata definitivamente.`
+    );
+  } catch (err) {
+    console.error('Eliminazione iscrizione:', err);
+    alert('Non riesco a eliminare la tessera. Nessuna nuova tessera deve essere creata: riprova dal gestionale.');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = originalText;
+  }
+}
+
 async function redeemBirthdayCoupon() {
   if (!selectedCard) return;
   const coupon = birthdayCouponStatus(selectedCard);
@@ -433,6 +519,7 @@ async function deleteMessage(id) {
 }
 
 $('toggleReview').addEventListener('click', toggleReviewStatus);
+$('deleteCustomerCard').addEventListener('click', deleteCustomerCard);
 $('publishMessage').addEventListener('click', publishMessage);
 $('refreshMessageReads').addEventListener('click', loadAdminMessages);
 
