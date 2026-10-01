@@ -639,9 +639,12 @@ async function ensureAnonymousSession() {
                       localStorage.setItem(RECOVERED_KEY, JSON.stringify({ recoveryCode: parsed.recoveryCode, card: freshCard }));
                       showCard(freshCard, parsed.recoveryCode, true);
                     } else {
-                      showCard(parsed.card, parsed.recoveryCode, true);
+                      localStorage.removeItem(RECOVERED_KEY);
+                      showRegistration();
+                      $('formError').textContent = 'Questa tessera non è più attiva. Se pensi sia un errore, contatta V.I.P.';
                     }
                   } catch {
+                    // Se la rete non è disponibile, la tessera recuperata resta consultabile offline.
                     showCard(parsed.card, parsed.recoveryCode, true);
                   }
                 }
